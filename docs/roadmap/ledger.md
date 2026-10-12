@@ -52,7 +52,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Phase slot; not mounted in legacy App.tsx |
 | P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
 | P1-08 | P1-07 | done-fixture | specs/P1-08-runtime-operations/evidence.md | Flag rollback drill; no deploy; D11 unmeasured |
-| P2-01 | P1-08 | pending |  | Workspace relation model |
+| P2-01 | P1-08 | done | specs/P2-01-workspace-model/evidence.md | Membership rows; Pi history not migrated |
 | P2-02 | P2-01 | pending |  | OIDC membership authorization |
 | P2-03 | P2-02 | pending |  | Membership and Agent directory API |
 | P2-04 | P2-02, P1-04 | pending |  | Task projection and Artifact ACL |
