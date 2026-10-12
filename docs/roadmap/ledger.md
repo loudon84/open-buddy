@@ -12,7 +12,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | --- | --- | --- | --- |
 | 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
 | 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; fixture drill recorded; D11 unmeasured |
-| 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | open |
+| 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | open |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | open |
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | open |
@@ -58,7 +58,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P2-04 | P2-02, P1-04 | done | specs/P2-04-task-projection/evidence.md | Duplicate events ignored; artifact revoke denies |
 | P2-05 | P2-03, P2-04 | done | specs/P2-05-workspace-shell/evidence.md | Scope switch drops stale items; not mounted in App.tsx |
 | P2-06 | P2-03, P2-04 | done | specs/P2-06-audit-retention/evidence.md | Physical delete blocked until D02 is signed |
-| P2-07 | P2-05, P2-06 | pending |  | Isolation matrix |
+| P2-07 | P2-05, P2-06 | done | specs/P2-07-isolation/evidence.md | Nine fixture paths; D01/D02 unsigned |
 | P3-01 | P2-07, P0-05 | pending |  | Enterprise manifest |
 | P3-02 | P3-01, P2-02 | pending |  | Plugin broker |
 | P3-03 | P3-02 | pending |  | Restricted third-party UI |

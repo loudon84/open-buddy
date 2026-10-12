@@ -52,6 +52,7 @@
     "verify:agent-host-boundaries": "node scripts/architecture/check-agent-host-boundaries.mjs",
     "verify:enterprise-boundaries": "node scripts/architecture/check-enterprise-boundaries.mjs",
     "verify:runtime-deployment": "node scripts/enterprise/runtime-smoke.mjs",
+    "verify:workspace-deployment": "node scripts/enterprise/workspace-smoke.mjs",
     "verify:plan": "node scripts/verify-plan.mjs",
     "verify:plan:baseline": "node scripts/architecture/generate-plan4-baseline.mjs --write",
     "verify:plan:tests": "node scripts/verify-plan.mjs --run-tsc --run-vitest",
