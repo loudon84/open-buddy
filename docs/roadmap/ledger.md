@@ -69,7 +69,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4A-01 | P3-07, P0-01 | done-fixture | specs/P4A-01-knowledge-map/evidence.md | HTTP provider mapped; facade excluded; D04 unprobed |
 | P4A-02 | P4A-01 | done-fixture | specs/P4A-02-knowledge-provider/evidence.md | Tenant filter in the provider; D04 unprobed |
 | P4A-03 | P4A-02 | done-fixture | specs/P4A-03-ingestion/evidence.md | Idempotent upload and three-store delete; D04 unsigned |
-| P4A-04 | P4A-03 | pending |  | Preview contract |
+| P4A-04 | P4A-03 | done | specs/P4A-04-preview-contract/evidence.md | Three providers; remote local paths refused |
 | P4A-05 | P4A-04 | pending |  | Six-format preview |
 | P4A-06 | P4A-03, P4A-05 | pending |  | Knowledge tools and citations |
 | P4A-07 | P4A-06 | pending |  | Knowledge acceptance |
