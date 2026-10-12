@@ -91,5 +91,5 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4E-01 | P4D-04 | done-fixture | specs/P4E-01-object-catalog/evidence.md | Older schema rejected; D08 unset |
 | P4E-02 | P4E-01 | done | specs/P4E-02-relations/evidence.md | Relations stay inside the caller tenant |
 | P4E-03 | P4E-02, P4C-04 | done-fixture | specs/P4E-03-quotes/evidence.md | Unapproved commit compensates; D08 unset |
-| P4E-04 | P4E-03 | pending |  | Ontology acceptance |
+| P4E-04 | P4E-03 | done-fixture | specs/P4E-04-ontology-security/evidence.md | Cross-tenant object and relation reads are empty |
 | P4E-05 | P4E-04 | pending |  | Yearly journey and follow-up backlog |
