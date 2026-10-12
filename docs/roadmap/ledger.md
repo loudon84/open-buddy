@@ -15,7 +15,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
-| 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | open |
+| 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | fixture chain recorded; D05 unprobed |
 | 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | open |
 | 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | open |
 | 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | open |
@@ -79,7 +79,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4B-04 | P4B-03, P3-02 | done | specs/P4B-04-browser-actions/evidence.md | Fresh approval required; CRM bypass refused |
 | P4B-05 | P4B-04, P1-04 | done-fixture | specs/P4B-05-browser-executor/evidence.md | Offline executor fails; CDP refused |
 | P4B-06 | P4B-05 | done-fixture | specs/P4B-06-browser-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
-| P4C-01 | P4B-06 | pending |  | CRM field map |
+| P4C-01 | P4B-06 | done-fixture | specs/P4C-01-crm-map/evidence.md | Required fields unset; external id is tenant-bound |
 | P4C-02 | P4C-01 | pending |  | Authorized customer read |
 | P4C-03 | P4C-02, P4A-06 | pending |  | Source-backed drafts |
 | P4C-04 | P4C-03 | pending |  | Approved commit and outbox |
