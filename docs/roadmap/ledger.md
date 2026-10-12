@@ -18,7 +18,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | fixture chain recorded; D05 unprobed |
 | 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | fixture chain recorded; D06 unset |
 | 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | fixture chain recorded; D07 unsigned |
-| 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | open |
+| 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | fixture chain recorded; D08 unset |
 
 Production gates stay closed. `done-fixture` does not flip a phase exit to passed when that exit needs a real environment.
 
@@ -92,4 +92,4 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4E-02 | P4E-01 | done | specs/P4E-02-relations/evidence.md | Relations stay inside the caller tenant |
 | P4E-03 | P4E-02, P4C-04 | done-fixture | specs/P4E-03-quotes/evidence.md | Unapproved commit compensates; D08 unset |
 | P4E-04 | P4E-03 | done-fixture | specs/P4E-04-ontology-security/evidence.md | Cross-tenant object and relation reads are empty |
-| P4E-05 | P4E-04 | pending |  | Yearly journey and follow-up backlog |
+| P4E-05 | P4E-04 | done-fixture | specs/P4E-05-yearly-journey/evidence.md | Fixture journey; staging exits 2; phase stays open |
