@@ -80,7 +80,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4B-05 | P4B-04, P1-04 | done-fixture | specs/P4B-05-browser-executor/evidence.md | Offline executor fails; CDP refused |
 | P4B-06 | P4B-05 | done-fixture | specs/P4B-06-browser-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
 | P4C-01 | P4B-06 | done-fixture | specs/P4C-01-crm-map/evidence.md | Required fields unset; external id is tenant-bound |
-| P4C-02 | P4C-01 | pending |  | Authorized customer read |
+| P4C-02 | P4C-01 | done-fixture | specs/P4C-02-crm-read/evidence.md | Same external id stays inside the caller tenant |
 | P4C-03 | P4C-02, P4A-06 | pending |  | Source-backed drafts |
 | P4C-04 | P4C-03 | pending |  | Approved commit and outbox |
 | P4C-05 | P4C-04 | pending |  | CRM acceptance |
