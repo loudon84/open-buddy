@@ -1,0 +1,11 @@
+{
+  "probed": false,
+  "targetReact": "18",
+  "httpProvider": "apps/work/src/main/knowledge/knowledge-http-provider.ts",
+  "excluded": [
+    "apps/work/src/main/knowledge/knowledge-provider-facade.ts",
+    "apps/work/src/main/knowledge/knowledge-mock-adapter.ts",
+    "apps/work/src/main/knowledge/knowledge-mock-store.ts"
+  ],
+  "requires": ["acl", "version", "delete"]
+}
