@@ -59,7 +59,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P2-05 | P2-03, P2-04 | done | specs/P2-05-workspace-shell/evidence.md | Scope switch drops stale items; not mounted in App.tsx |
 | P2-06 | P2-03, P2-04 | done | specs/P2-06-audit-retention/evidence.md | Physical delete blocked until D02 is signed |
 | P2-07 | P2-05, P2-06 | done | specs/P2-07-isolation/evidence.md | Nine fixture paths; D01/D02 unsigned |
-| P3-01 | P2-07, P0-05 | pending |  | Enterprise manifest |
+| P3-01 | P2-07, P0-05 | done | specs/P3-01-enterprise-manifest/evidence.md | Legacy alias does not widen grants |
 | P3-02 | P3-01, P2-02 | pending |  | Plugin broker |
 | P3-03 | P3-02 | pending |  | Restricted third-party UI |
 | P3-04 | P3-02 | pending |  | Remote container backend |
