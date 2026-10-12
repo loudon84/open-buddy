@@ -54,6 +54,7 @@
     "verify:runtime-deployment": "node scripts/enterprise/runtime-smoke.mjs",
     "verify:workspace-deployment": "node scripts/enterprise/workspace-smoke.mjs",
     "test:plugin-e2e": "node scripts/enterprise/plugin-smoke.mjs",
+    "test:knowledge-e2e": "node scripts/enterprise/knowledge-smoke.mjs",
     "verify:plan": "node scripts/verify-plan.mjs",
     "verify:plan:baseline": "node scripts/architecture/generate-plan4-baseline.mjs --write",
     "verify:plan:tests": "node scripts/verify-plan.mjs --run-tsc --run-vitest",

@@ -14,7 +14,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; fixture drill recorded; D11 unmeasured |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
-| 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | open |
+| 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | open |
 | 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | open |
 | 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | open |
@@ -72,7 +72,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4A-04 | P4A-03 | done | specs/P4A-04-preview-contract/evidence.md | Three providers; remote local paths refused |
 | P4A-05 | P4A-04 | done | specs/P4A-05-preview-safety/evidence.md | Six formats; script, MIME, SSRF, and path checks |
 | P4A-06 | P4A-03, P4A-05 | done-fixture | specs/P4A-06-knowledge-tools/evidence.md | Citations from the authorized version; D04 unprobed |
-| P4A-07 | P4A-06 | pending |  | Knowledge acceptance |
+| P4A-07 | P4A-06 | done-fixture | specs/P4A-07-knowledge-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
 | P4B-01 | P4A-07 | pending |  | Browser runtime and profiles |
 | P4B-02 | P4B-01 | pending |  | Domain policy |
 | P4B-03 | P4B-02, P4A-04 | pending |  | DOM read and snapshot |
