@@ -55,7 +55,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P2-01 | P1-08 | done | specs/P2-01-workspace-model/evidence.md | Membership rows; Pi history not migrated |
 | P2-02 | P2-01 | done | specs/P2-02-authorization/evidence.md | D01 grants; admin is not an implicit document read |
 | P2-03 | P2-02 | done | specs/P2-03-directory-api/evidence.md | No self-promotion; stale revision 409 |
-| P2-04 | P2-02, P1-04 | pending |  | Task projection and Artifact ACL |
+| P2-04 | P2-02, P1-04 | done | specs/P2-04-task-projection/evidence.md | Duplicate events ignored; artifact revoke denies |
 | P2-05 | P2-03, P2-04 | pending |  | Workspace shell |
 | P2-06 | P2-03, P2-04 | pending |  | Audit and retention |
 | P2-07 | P2-05, P2-06 | pending |  | Isolation matrix |
