@@ -34,6 +34,12 @@ test-grok-connection.mjs
 docs/*
 !docs/agents/
 !docs/agents/**
+!docs/roadmap/
+!docs/roadmap/**
+!docs/architecture/
+!docs/architecture/**
+!docs/adr/
+!docs/adr/**
 !docs/storage-verification-report.md
 !docs/distributed-buddy-network-architecture.md
 !docs/migration-pi-electron.md
