@@ -56,7 +56,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P2-02 | P2-01 | done | specs/P2-02-authorization/evidence.md | D01 grants; admin is not an implicit document read |
 | P2-03 | P2-02 | done | specs/P2-03-directory-api/evidence.md | No self-promotion; stale revision 409 |
 | P2-04 | P2-02, P1-04 | done | specs/P2-04-task-projection/evidence.md | Duplicate events ignored; artifact revoke denies |
-| P2-05 | P2-03, P2-04 | pending |  | Workspace shell |
+| P2-05 | P2-03, P2-04 | done | specs/P2-05-workspace-shell/evidence.md | Scope switch drops stale items; not mounted in App.tsx |
 | P2-06 | P2-03, P2-04 | pending |  | Audit and retention |
 | P2-07 | P2-05, P2-06 | pending |  | Isolation matrix |
 | P3-01 | P2-07, P0-05 | pending |  | Enterprise manifest |
