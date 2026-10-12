@@ -76,7 +76,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4B-01 | P4A-07 | done-fixture | specs/P4B-01-browser-runtime/evidence.md | Isolated profile; CDP port unset |
 | P4B-02 | P4B-01 | done-fixture | specs/P4B-02-domain-policy/evidence.md | Registrable domain and port; D05 unprobed |
 | P4B-03 | P4B-02, P4A-04 | done | specs/P4B-03-page-read/evidence.md | Title and text snapshot; evaluate refused |
-| P4B-04 | P4B-03, P3-02 | pending |  | click/fill approval |
+| P4B-04 | P4B-03, P3-02 | done | specs/P4B-04-browser-actions/evidence.md | Fresh approval required; CRM bypass refused |
 | P4B-05 | P4B-04, P1-04 | pending |  | Desktop browser executor |
 | P4B-06 | P4B-05 | pending |  | Browser acceptance |
 | P4C-01 | P4B-06 | pending |  | CRM field map |
