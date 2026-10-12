@@ -17,7 +17,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | fixture chain recorded; D05 unprobed |
 | 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | fixture chain recorded; D06 unset |
-| 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | open |
+| 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | fixture chain recorded; D07 unsigned |
 | 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | open |
 
 Production gates stay closed. `done-fixture` does not flip a phase exit to passed when that exit needs a real environment.
@@ -87,7 +87,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4D-01 | P4C-05 | done-fixture | specs/P4D-01-metric-contract/evidence.md | Unsigned fixture expression; D07 unprobed |
 | P4D-02 | P4D-01 | done | specs/P4D-02-metric-cache/evidence.md | Tenant totals and a hard query limit |
 | P4D-03 | P4D-02 | done | specs/P4D-03-metric-explain/evidence.md | Explain names the metric; export needs a grant |
-| P4D-04 | P4D-03 | pending |  | BI acceptance |
+| P4D-04 | P4D-03 | done-fixture | specs/P4D-04-bi-acceptance/evidence.md | Fixture totals; staging exits 2; phase stays open |
 | P4E-01 | P4D-04 | pending |  | Object catalog and schema versions |
 | P4E-02 | P4E-01 | pending |  | Authorized relation query |
 | P4E-03 | P4E-02, P4C-04 | pending |  | Quote prepare/commit |
