@@ -59,3 +59,7 @@ Issues and specs live as GitHub issues in loudon84/open-buddy. See `docs/agents/
 ### Domain docs
 
 single-context. See `docs/agents/domain.md`.
+
+### Roadmap execution
+
+Enterprise Agent OS work on `roadmap/enterprise-agent-os` follows [docs/roadmap/WORKFLOW.md](docs/roadmap/WORKFLOW.md). One session implements one Task from [prd/roadmap.md](prd/roadmap.md): grilling (adopt the recommended answer), review, plan, execute, then commit. Read [docs/roadmap/ledger.md](docs/roadmap/ledger.md) and [docs/roadmap/decisions.md](docs/roadmap/decisions.md) at the start of every Task. Principles are in [.specify/memory/constitution.md](.specify/memory/constitution.md).
