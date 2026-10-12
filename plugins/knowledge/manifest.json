@@ -1,0 +1,6 @@
+{
+  "id": "plugin.knowledge.reader",
+  "version": "1.0.0",
+  "permissions": ["plugin.knowledge.read"],
+  "surfaces": ["renderer"]
+}
