@@ -16,7 +16,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | fixture chain recorded; D05 unprobed |
-| 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | open |
+| 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | fixture chain recorded; D06 unset |
 | 4D | P4D-01–P4D-04 | Metric query and explain; real totals wait on D07 | open |
 | 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | open |
 
@@ -83,7 +83,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4C-02 | P4C-01 | done-fixture | specs/P4C-02-crm-read/evidence.md | Same external id stays inside the caller tenant |
 | P4C-03 | P4C-02, P4A-06 | done | specs/P4C-03-crm-drafts/evidence.md | Drafts stay uncommitted and source-scoped |
 | P4C-04 | P4C-03 | done-fixture | specs/P4C-04-crm-outbox/evidence.md | Approval, replay, and reconciliation; D06 unprobed |
-| P4C-05 | P4C-04 | pending |  | CRM acceptance |
+| P4C-05 | P4C-04 | done-fixture | specs/P4C-05-crm-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
 | P4D-01 | P4C-05 | pending |  | Metric semantic model |
 | P4D-02 | P4D-01 | pending |  | Policy query and cache |
 | P4D-03 | P4D-02 | pending |  | Charts, explain, export |
