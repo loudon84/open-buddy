@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readPage } from "../../services/enterprise-browser/src/page-read.ts";
+import { readPage } from "../../services/enterprise-browser/src/page-read";
 
 describe("P4B-03 page read", () => {
   it("returns title, text, and a screenshot ref without evaluate", () => {

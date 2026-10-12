@@ -6,6 +6,7 @@ export interface HermesClientOptions {
   tokens: TokenSource;
   log: (line: string) => void;
   sleep?: (ms: number) => Promise<void>;
+  fetchImpl?: typeof fetch;
 }
 
 export class HermesClient {

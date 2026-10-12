@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crmFieldContract } from "../../services/enterprise-crm/src/directory.ts";
+import { crmFieldContract } from "../../services/enterprise-crm/src/directory";
 
 describe("P4C-01 CRM map", () => {
   it("keeps required fields empty until D06 is signed", () => {

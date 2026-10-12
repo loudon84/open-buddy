@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { WorkspaceDirectory } from "../../services/enterprise-workspace/src/models.ts";
-import { IsolationDirectory, isolationPaths, type IsolationPath } from "../../services/enterprise-workspace/src/isolation.ts";
+import { WorkspaceDirectory } from "../../services/enterprise-workspace/src/models";
+import { IsolationDirectory, isolationPaths, type IsolationPath } from "../../services/enterprise-workspace/src/isolation";
 
 const callerA = { tenantId: "tenant-a", workspaceId: "ws-a", userId: "user-a" };
 const callerB = { tenantId: "tenant-b", workspaceId: "ws-b", userId: "user-b" };

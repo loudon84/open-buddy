@@ -11,3 +11,7 @@ A matching digest installed for tenant-a and was refused for tenant-b. Hash mism
 ## Limits
 
 D09's production approver is not signed.
+
+## Review remediation (2026-10-12)
+
+The earlier registry trusted a content hash and a caller `approved` flag. It now verifies an Ed25519 signature and a tenant approver list. Keys in tests are generated fixtures. See [the review record](../../docs/roadmap/review-2026-10-12.md).

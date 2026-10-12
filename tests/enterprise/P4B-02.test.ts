@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { navigate } from "../../services/enterprise-browser/src/domain-policy.ts";
+import { navigate } from "../../services/enterprise-browser/src/domain-policy";
 
 const rules = [{ registrableDomain: "example.com", ports: [443] }];
 

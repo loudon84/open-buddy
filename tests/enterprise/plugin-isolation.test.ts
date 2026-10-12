@@ -1,11 +1,12 @@
 import { spawnSync } from "node:child_process";
+import { generateKeyPairSync, sign } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { negotiate } from "../../packages/runtime/openbuddy-plugin-sdk/src/enterprise-manifest.ts";
-import { digest, PluginRegistry } from "../../services/enterprise-plugin-registry/src/catalog.ts";
-import { PluginLifecycle } from "../../packages/runtime/openbuddy-plugin-host/src/installation-store.ts";
-import { IsolatedUiHost } from "../../packages/runtime/openbuddy-plugin-host/src/isolated-ui-host.ts";
-import { installBackend } from "../../services/enterprise-plugin-worker/src/broker.ts";
-import { serializePiTrack, serializeSlotTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest.ts";
+import { negotiate } from "../../packages/runtime/openbuddy-plugin-sdk/src/enterprise-manifest";
+import { PluginRegistry, signingPayload } from "../../services/enterprise-plugin-registry/src/catalog";
+import { PluginLifecycle } from "../../packages/runtime/openbuddy-plugin-host/src/installation-store";
+import { IsolatedUiHost } from "../../packages/runtime/openbuddy-plugin-host/src/isolated-ui-host";
+import { installBackend } from "../../services/enterprise-plugin-worker/src/broker";
+import { serializePiTrack, serializeSlotTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest";
 
 describe("P3-07 plugin fixture chain", () => {
   it("installs an approved package and refuses a hostile surface and backend", () => {
@@ -18,19 +19,23 @@ describe("P3-07 plugin fixture chain", () => {
       legacyAliases: ["customer.read"],
     }], true);
     expect(accepted[0]?.permissions).toEqual(["plugin.session.read"]);
-    const bytes = "fixture-bytes";
-    const release = new PluginRegistry().publish({
-      tenantId: "tenant-a",
-      bytes,
-      declaredHash: digest(bytes),
-      permissions: ["plugin.session.read"],
-      approved: true,
-      signer: "key-1",
-      revokedKeys: [],
-      entries: [{ name: "index.js", size: 12 }],
+    const keys = generateKeyPairSync("ed25519");
+    const registry = new PluginRegistry({
+      publisherKeys: new Map([["publisher-1", keys.publicKey]]),
+      approvers: new Map([["tenant-a", new Set(["security-officer"])]]),
     });
+    const manifest = { id: "plugin.session.reader", version: "1.0.0", permissions: ["plugin.session.read"] };
+    const files = [{ name: "index.js", bytes: new TextEncoder().encode("fixture-bytes") }];
+    const published = registry.publish({
+      tenantId: "tenant-a",
+      manifest,
+      files,
+      signature: { keyId: "publisher-1", value: sign(null, signingPayload(manifest, files), keys.privateKey).toString("base64") },
+    });
+    registry.approve(published.releaseId, { tenantId: "tenant-a", actorId: "security-officer" });
+    const release = registry.install("tenant-a", published.releaseId);
     const life = new PluginLifecycle();
-    life.apply({ version: "1.0.0", schema: 2, permissions: release.permissions, routes: ["panel"], tools: [], mcp: [], business: [] }, { minSchema: 2, allowed: ["plugin.session.read"] });
+    life.apply({ version: "1.0.0", schema: 2, permissions: release.manifest.permissions, routes: ["panel"], tools: [], mcp: [], business: [] }, { minSchema: 2, allowed: ["plugin.session.read"] });
     const host = new IsolatedUiHost();
     host.mount({ viewRef: "view://fixture", tenantId: "tenant-a", uiGrant: true, backendGrant: false });
     expect(() => host.receive({ channel: "ipc" })).toThrow(/denied/);

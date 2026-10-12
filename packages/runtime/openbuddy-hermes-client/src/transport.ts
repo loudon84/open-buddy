@@ -16,9 +16,13 @@ export class HermesTransport {
 
   constructor(private readonly options: TransportOptions) {}
 
-  async request(path: string, init: { method: string; body?: unknown } = { method: "GET" }, retried = false): Promise<Response> {
+  async request(
+    path: string,
+    init: { method: string; body?: unknown; headers?: Record<string, string>; signal?: AbortSignal } = { method: "GET" },
+    retried = false,
+  ): Promise<Response> {
     const token = await this.options.tokens.getAccessToken();
-    const headers = new Headers();
+    const headers = new Headers(init.headers);
     headers.set("authorization", `Bearer ${token}`);
     if (init.body !== undefined) headers.set("content-type", "application/json");
     const fetchImpl = this.options.fetchImpl ?? fetch;
@@ -26,6 +30,7 @@ export class HermesTransport {
       method: init.method,
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
+      signal: init.signal,
     });
     this.options.log(`http ${response.status} ${init.method} ${path}`);
     if (response.status === 401 && !retried) {

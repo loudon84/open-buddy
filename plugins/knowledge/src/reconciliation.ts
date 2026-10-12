@@ -1,1 +1,1 @@
-export { DocumentLifecycle as reconcileLifecycle } from "./ingestion.ts";
+export { DocumentLifecycle as reconcileLifecycle } from "./ingestion";

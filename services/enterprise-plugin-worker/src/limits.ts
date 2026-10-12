@@ -1,1 +1,1 @@
-export { launch } from "./runner.ts";
+export { launch } from "./runner";

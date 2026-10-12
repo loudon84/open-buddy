@@ -169,3 +169,12 @@ export interface RuntimeAdapter {
     options?: CallOptions,
   ): Promise<{ agentInstanceId: string; status: string; capabilities: Capabilities; updatedAt: string }>;
 }
+
+export type RuntimePhase =
+  | "accepted"
+  | "running"
+  | "waiting"
+  | "completed"
+  | "cancel-pending"
+  | "cancelled"
+  | "disconnected";

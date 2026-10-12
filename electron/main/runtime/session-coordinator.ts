@@ -1,4 +1,4 @@
-import { SessionProjection, type ProjectionEvent } from "../../../packages/runtime/openbuddy-workspace/src/session-projection.ts";
+import { SessionProjection, type ProjectionEvent } from "../../../packages/runtime/openbuddy-workspace/src/session-projection";
 
 export class SessionCoordinator {
   constructor(readonly projection = new SessionProjection()) {}

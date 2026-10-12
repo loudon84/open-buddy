@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ObjectCatalog } from "../../services/enterprise-ontology/src/catalog.ts";
+import { ObjectCatalog } from "../../services/enterprise-ontology/src/catalog";
 
 describe("P4E-01 object catalog", () => {
   it("rejects an older schema for the same object", () => {

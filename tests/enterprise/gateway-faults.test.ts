@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { startGateway } from "../../services/hermes-agent-gateway/src/server.ts";
+import { startGateway } from "../../services/hermes-agent-gateway/src/server";
 
 describe("P1-07 gateway faults", () => {
   it("surfaces an upstream 500 without calling it a success", async () => {

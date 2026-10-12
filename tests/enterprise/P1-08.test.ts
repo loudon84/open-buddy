@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { CommandLog } from "../../services/hermes-agent-gateway/src/command-log.ts";
-import { assertDeploymentConfig, readiness, rollbackRemoteFlag } from "../../services/hermes-agent-gateway/src/operations.ts";
+import { CommandLog } from "../../services/hermes-agent-gateway/src/command-log";
+import { assertDeploymentConfig, readiness, rollbackRemoteFlag } from "../../services/hermes-agent-gateway/src/operations";
 
 describe("P1-08 runtime operations", () => {
   it("requires healthy dependencies and does not convert remote sessions on rollback", async () => {
@@ -22,11 +22,12 @@ describe("P1-08 runtime operations", () => {
     const dir = await mkdtemp(join(tmpdir(), "ob-restore-"));
     const source = join(dir, "commands.json");
     const log = new CommandLog(source);
-    await log.execute("key-1", "hash-a", async () => ({ runId: "run-1" }));
+    const scope = { tenantId: "tenant-a", workspaceId: "ws-a", operation: "session.message", resourceId: "sess-a" };
+    await log.execute(scope, "key-1", "hash-a", async () => ({ runId: "run-1" }));
     const copy = join(dir, "commands-restored.json");
     await writeFile(copy, await readFile(source));
     const restored = new CommandLog(copy);
-    const replay = await restored.execute("key-1", "hash-a", async () => ({ runId: "run-other" }));
+    const replay = await restored.execute(scope, "key-1", "hash-a", async () => ({ runId: "run-other" }));
     expect(replay.runId).toBe("run-1");
     expect(restored.listEvents().map((event) => event.seq)).toEqual(log.listEvents().map((event) => event.seq));
     await rm(dir, { recursive: true, force: true });

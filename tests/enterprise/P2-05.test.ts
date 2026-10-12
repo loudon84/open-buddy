@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { applyResponse, createScope, goOffline, switchTenant } from "../../packages/ui/openbuddy-ui-enterprise/src/workspace-shell.ts";
-import { WorkspaceShell } from "../../packages/ui/openbuddy-ui-enterprise/src/workspace-navigation.tsx";
+import { applyResponse, createScope, goOffline, switchTenant } from "../../packages/ui/openbuddy-ui-enterprise/src/workspace-shell";
+import { WorkspaceShell } from "../../packages/ui/openbuddy-ui-enterprise/src/workspace-navigation";
 
 describe("P2-05 workspace shell", () => {
   it("clears the old tenant cache and drops a stale response", () => {

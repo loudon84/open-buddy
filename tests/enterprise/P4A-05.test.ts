@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizePreview } from "../../packages/capability/openbuddy-file-preview/src/sanitize.ts";
+import { sanitizePreview } from "../../packages/capability/openbuddy-file-preview/src/sanitize";
 
 describe("P4A-05 preview safety", () => {
   it("keeps six formats and strips active content", () => {

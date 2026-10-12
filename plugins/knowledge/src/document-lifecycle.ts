@@ -1,2 +1,2 @@
-export { DocumentLifecycle } from "./ingestion.ts";
-export type { StoredDocument } from "./ingestion.ts";
+export { DocumentLifecycle } from "./ingestion";
+export type { StoredDocument } from "./ingestion";

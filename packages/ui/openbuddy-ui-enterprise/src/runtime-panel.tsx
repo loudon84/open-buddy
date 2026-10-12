@@ -1,13 +1,7 @@
 import { createElement, type ReactElement } from "react";
+import type { RuntimePhase } from "../../../runtime/openbuddy-runtime-adapter/src/types";
 
-export type RuntimePhase =
-  | "accepted"
-  | "running"
-  | "waiting"
-  | "completed"
-  | "cancel-pending"
-  | "cancelled"
-  | "disconnected";
+export type { RuntimePhase };
 
 const labels: Record<RuntimePhase, string> = {
   accepted: "已接受",

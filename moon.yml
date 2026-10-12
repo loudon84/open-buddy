@@ -39,7 +39,7 @@ tasks:
   # root tsconfig. Cascades to `app-desktop:typecheck` so the electron main
   # + preload TypeScript in `electron/{main,preload}/**` is also checked.
   typecheck:
-    script: "./node_modules/.bin/tsc --noEmit"
+    script: "./node_modules/.bin/tsc --noEmit && ./node_modules/.bin/tsc -p tsconfig.enterprise.json"
     deps:
       - "app-desktop:typecheck"
     inputs:

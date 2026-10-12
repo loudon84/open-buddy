@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { metricContract } from "../../services/enterprise-bi/src/metrics.ts";
+import { metricContract } from "../../services/enterprise-bi/src/metrics";
 
 describe("P4D-01 metric contract", () => {
   it("records an unsigned fixture expression", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditLine, authorize } from "../../services/enterprise-workspace/src/authorization.ts";
+import { auditLine, authorize } from "../../services/enterprise-workspace/src/authorization";
 
 const memberships = [
   { userId: "user-1", tenantId: "tenant-a", role: "tenant-admin" as const },

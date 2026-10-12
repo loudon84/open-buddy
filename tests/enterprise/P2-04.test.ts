@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ArtifactApi, TaskProjection } from "../../services/enterprise-workspace/src/task-projection.ts";
+import { ArtifactApi, TaskProjection } from "../../services/enterprise-workspace/src/task-projection";
 
 describe("P2-04 task projection", () => {
   it("ignores a duplicate event and refuses a cross-tenant artifact", () => {

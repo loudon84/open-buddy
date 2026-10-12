@@ -1,4 +1,4 @@
-import type { ErrorCode, EventType, RuntimeError } from "./types.ts";
+import type { ErrorCode, EventType, RuntimeError } from "./types";
 
 export class LocalPiError extends Error implements RuntimeError {
   readonly retryable = false;
@@ -20,7 +20,7 @@ export function assertLocalScope(tenantId: string, installationId: string): void
   }
 }
 
-export function mapPiHostEvent(event: { type?: string }): EventType {
+export function mapPiHostEvent(event: { type?: string; [field: string]: unknown }): EventType {
   switch (event.type) {
     case "tool_call":
       return "tool.started";

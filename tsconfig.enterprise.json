@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": [
+    "services/hermes-agent-gateway/src/**/*.ts",
+    "services/enterprise-*/src/**/*.ts",
+    "plugins/knowledge/src/**/*.ts",
+    "plugins/knowledge/src/**/*.tsx",
+    "packages/capability/openbuddy-file-preview/src/**/*.ts",
+    "packages/ui/openbuddy-ui-enterprise/src/**/*.ts",
+    "packages/ui/openbuddy-ui-enterprise/src/**/*.tsx",
+    "tests/enterprise/**/*.ts"
+  ],
+  "exclude": ["**/node_modules/**", "**/dist/**", "**/lib/**", "**/.worktrees/**"]
+}

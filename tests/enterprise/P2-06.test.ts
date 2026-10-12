@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deleteResource, readAudit, reconcile, writeAudit } from "../../services/enterprise-workspace/src/audit.ts";
+import { deleteResource, readAudit, reconcile, writeAudit } from "../../services/enterprise-workspace/src/audit";
 
 describe("P2-06 audit and retention", () => {
   it("redacts secrets, blocks physical delete, and reports missing ids", () => {

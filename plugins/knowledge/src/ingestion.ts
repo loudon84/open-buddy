@@ -3,7 +3,13 @@ export interface StoredDocument {
   tenantId: string;
   version: number;
   key: string;
+  contentHash: string;
   revoked: boolean;
+}
+
+function scoped(tenantId: string, value: string): string {
+  if (!tenantId || !value) throw new Error("tenant and id are required");
+  return JSON.stringify([tenantId, value]);
 }
 
 export class DocumentLifecycle {
@@ -13,47 +19,70 @@ export class DocumentLifecycle {
   readonly cache = new Set<string>();
   private readonly keys = new Map<string, string>();
 
-  upload(input: { tenantId: string; key: string; id: string }): StoredDocument {
-    const existing = this.keys.get(input.key);
-    if (existing) return this.documents.get(existing)!;
-    const document: StoredDocument = { id: input.id, tenantId: input.tenantId, version: 1, key: input.key, revoked: false };
-    this.documents.set(input.id, document);
-    this.keys.set(input.key, input.id);
-    this.blobs.add(input.id);
-    this.index.add(input.id);
-    this.cache.add(input.id);
+  upload(input: { tenantId: string; key: string; id: string; contentHash: string }): StoredDocument {
+    const keyRef = scoped(input.tenantId, input.key);
+    const existingId = this.keys.get(keyRef);
+    if (existingId) {
+      const existing = this.documents.get(existingId)!;
+      if (existing.contentHash !== input.contentHash) throw new Error("idempotency key reused with different content");
+      return existing;
+    }
+    const ref = scoped(input.tenantId, input.id);
+    if (this.documents.has(ref)) throw new Error("document id already exists");
+    const document: StoredDocument = {
+      id: input.id,
+      tenantId: input.tenantId,
+      version: 1,
+      key: input.key,
+      contentHash: input.contentHash,
+      revoked: false,
+    };
+    this.documents.set(ref, document);
+    this.keys.set(keyRef, ref);
+    this.blobs.add(ref);
+    this.index.add(ref);
+    this.cache.add(ref);
     return document;
   }
 
-  retry(id: string): StoredDocument {
-    const document = this.documents.get(id);
-    if (!document) throw new Error("missing document");
-    return document;
+  retry(tenantId: string, id: string): StoredDocument {
+    return this.require(tenantId, id);
   }
 
-  revoke(id: string): void {
-    const document = this.documents.get(id);
-    if (!document) throw new Error("missing document");
+  revoke(tenantId: string, id: string): void {
+    const document = this.require(tenantId, id);
     document.revoked = true;
-    this.cache.delete(id);
+    this.cache.delete(scoped(tenantId, id));
   }
 
-  retrieve(id: string, tenantId: string): StoredDocument {
-    const document = this.documents.get(id);
-    if (!document || document.tenantId !== tenantId) throw new Error("not found");
+  retrieve(tenantId: string, id: string): StoredDocument {
+    const document = this.require(tenantId, id);
     if (document.revoked) throw new Error("revoked");
     return document;
   }
 
-  delete(id: string): void {
-    this.documents.delete(id);
-    this.blobs.delete(id);
-    this.index.delete(id);
-    this.cache.delete(id);
+  delete(tenantId: string, id: string): void {
+    const document = this.require(tenantId, id);
+    const ref = scoped(tenantId, id);
+    this.documents.delete(ref);
+    this.keys.delete(scoped(tenantId, document.key));
+    this.blobs.delete(ref);
+    this.index.delete(ref);
+    this.cache.delete(ref);
+  }
+
+  has(store: "blobs" | "index" | "cache", tenantId: string, id: string): boolean {
+    return this[store].has(scoped(tenantId, id));
   }
 
   poll(attempts: number): "settled" | "gave-up" {
     if (attempts > 3) return "gave-up";
     return "settled";
+  }
+
+  private require(tenantId: string, id: string): StoredDocument {
+    const document = this.documents.get(scoped(tenantId, id));
+    if (!document) throw new Error("not found");
+    return document;
   }
 }

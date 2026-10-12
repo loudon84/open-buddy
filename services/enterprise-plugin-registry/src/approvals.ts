@@ -1,1 +1,1 @@
-export { PluginRegistry } from "./catalog.ts";
+export { PluginRegistry } from "./catalog";

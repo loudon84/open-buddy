@@ -1,1 +1,1 @@
-export { CommandLog, CommandConflict } from "./command-log.ts";
+export { CommandLog, CommandConflict } from "./command-log";

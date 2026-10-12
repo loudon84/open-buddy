@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { negotiate } from "../../packages/runtime/openbuddy-plugin-sdk/src/enterprise-manifest.ts";
-import { serializePiTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest.ts";
+import { negotiate } from "../../packages/runtime/openbuddy-plugin-sdk/src/enterprise-manifest";
+import { serializePiTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest";
 
 const base = {
   id: "plugin.session.reader",

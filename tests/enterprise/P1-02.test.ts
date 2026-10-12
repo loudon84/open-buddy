@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { startGateway, type VerifiedIdentity } from "../../services/hermes-agent-gateway/src/server.ts";
+import { startGateway, type VerifiedIdentity } from "../../services/hermes-agent-gateway/src/server";
 
 function identity(tenantId: string, role: VerifiedIdentity["role"] = "tenant-admin"): VerifiedIdentity {
   return { tenantId, workspaceId: "workspace-1", actorId: "actor-1", role };
@@ -78,8 +78,9 @@ describe("P1-02 gateway routing", () => {
     });
     expect(created.status).toBe(201);
     const session = await created.json() as { sessionId: string; runtimeId: string };
-    expect(session.sessionId).toBe("sess-a");
-    expect(upstreamA.hits.length).toBe(1);
+    expect(session.sessionId).toMatch(/^gws_/);
+    expect(JSON.stringify(session)).not.toContain(upstreamA.url);
+    expect(upstreamA.hits).toEqual(["POST /v1/sessions"]);
     expect(evil.hits).toEqual([]);
 
     const sent = await gateway.fetch(`/v1/sessions/${session.sessionId}/messages`, {
@@ -90,6 +91,7 @@ describe("P1-02 gateway routing", () => {
     expect(sent.status).toBe(202);
     const receipt = await sent.json() as { runId: string; status: string };
     expect(receipt).toMatchObject({ runId: "run-a", status: "accepted" });
+    expect(upstreamA.hits.at(-1)).toBe("POST /v1/sessions/sess-a/messages");
 
     const status = await gateway.fetch("/v1/agent-instances/inst-a/status", {
       headers: { "x-tenant-id": "tenant-a", "x-role": "member" },
@@ -117,8 +119,8 @@ describe("P1-02 gateway routing", () => {
       headers: { "content-type": "application/json", "idempotency-key": "k4", "x-tenant-id": "tenant-a", "x-role": "member" },
       body: JSON.stringify({ agentInstanceId: "inst-b" }),
     });
-    expect((await other.json() as { sessionId: string }).sessionId).toBe("sess-b");
-    expect(upstreamB.hits.length).toBe(1);
+    expect((await other.json() as { sessionId: string }).sessionId).toMatch(/^gws_/);
+    expect(upstreamB.hits).toEqual(["POST /v1/sessions"]);
 
     await gateway.close();
     const restarted = await startGateway({

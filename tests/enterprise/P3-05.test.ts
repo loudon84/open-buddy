@@ -1,41 +1,80 @@
+import { generateKeyPairSync, sign } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { digest, PluginRegistry } from "../../services/enterprise-plugin-registry/src/catalog.ts";
+import {
+  PluginRegistry,
+  signingPayload,
+  type ReleaseFile,
+  type ReleaseInput,
+  type ReleaseManifest,
+} from "../../services/enterprise-plugin-registry/src/catalog";
 
-describe("P3-05 plugin registry", () => {
-  it("rejects a tampered bundle and clears approval when permissions grow", () => {
-    const registry = new PluginRegistry();
-    const bytes = "plugin-bytes";
-    const release = registry.publish({
-      tenantId: "tenant-a",
-      bytes,
-      declaredHash: digest(bytes),
-      permissions: ["plugin.session.read"],
-      approved: true,
-      signer: "key-1",
-      revokedKeys: [],
-      entries: [{ name: "index.js", size: 10 }],
-    });
-    expect(registry.install("tenant-a", release).hash).toBe(digest(bytes));
-    expect(() => registry.install("tenant-b", release)).toThrow(/cross-tenant/);
-    expect(() => registry.publish({ ...base(bytes), declaredHash: "nope" })).toThrow(/hash/);
-    expect(() => registry.publish({ ...base(bytes), signer: "key-1", revokedKeys: ["key-1"] })).toThrow(/revoked/);
-    expect(() => registry.publish({ ...base(bytes), approved: false })).toThrow(/unapproved/);
-    expect(() => registry.publish({ ...base("SECRET=value"), bytes: "SECRET=value", declaredHash: digest("SECRET=value") })).toThrow(/secret/);
-    expect(() => registry.publish({ ...base(bytes), entries: [{ name: "../etc/passwd", size: 1 }] })).toThrow(/archive/);
-    expect(() => registry.publish({ ...base(bytes), entries: [{ name: "big.bin", size: 2_000_000 }] })).toThrow(/archive/);
-    expect(registry.addPermission(release, "plugin.tool.execute").approved).toBe(false);
-  });
-});
+const publisher = generateKeyPairSync("ed25519");
+const stranger = generateKeyPairSync("ed25519");
+const encoder = new TextEncoder();
 
-function base(bytes: string) {
+function signed(manifest: ReleaseManifest, files: ReleaseFile[], keyId = "publisher-1", privateKey = publisher.privateKey): ReleaseInput {
   return {
     tenantId: "tenant-a",
-    bytes,
-    declaredHash: digest(bytes),
-    permissions: ["plugin.session.read"],
-    approved: true,
-    signer: "key-2",
-    revokedKeys: [] as string[],
-    entries: [{ name: "index.js", size: 10 }],
+    manifest,
+    files,
+    signature: { keyId, value: sign(null, signingPayload(manifest, files), privateKey).toString("base64") },
   };
 }
+
+function registry(): PluginRegistry {
+  return new PluginRegistry({
+    publisherKeys: new Map([["publisher-1", publisher.publicKey]]),
+    approvers: new Map([["tenant-a", new Set(["security-officer"])]]),
+  });
+}
+
+const manifest: ReleaseManifest = { id: "sample", version: "1.0.0", permissions: ["plugin.session.read"] };
+const files: ReleaseFile[] = [{ name: "index.js", bytes: encoder.encode("export default 1") }];
+
+describe("P3-05 plugin registry", () => {
+  it("installs only a release signed by a trusted key and approved by a listed approver", () => {
+    const reg = registry();
+    const release = reg.publish(signed(manifest, files));
+    expect(release.state).toBe("pending-approval");
+    expect(() => reg.install("tenant-a", release.releaseId)).toThrow(/unapproved/);
+    expect(() => reg.approve(release.releaseId, { tenantId: "tenant-a", actorId: "plugin-author" })).toThrow(/approver/);
+    expect(() => reg.approve(release.releaseId, { tenantId: "tenant-b", actorId: "security-officer" })).toThrow(/not found/);
+    reg.approve(release.releaseId, { tenantId: "tenant-a", actorId: "security-officer" });
+    expect(reg.install("tenant-a", release.releaseId).approvedBy).toBe("security-officer");
+    expect(() => reg.install("tenant-b", release.releaseId)).toThrow(/cross-tenant/);
+  });
+
+  it("rejects self-made hashes, foreign keys, tampered files, and revoked signers", () => {
+    const reg = registry();
+    expect(() => reg.publish(signed(manifest, files, "attacker-key", stranger.privateKey))).toThrow(/unknown signer/);
+    expect(() => reg.publish(signed(manifest, files, "publisher-1", stranger.privateKey))).toThrow(/signature/);
+    const tampered = signed(manifest, files);
+    tampered.files = [{ name: "index.js", bytes: encoder.encode("export default 2") }];
+    expect(() => reg.publish(tampered)).toThrow(/signature/);
+    const widened = signed(manifest, files);
+    widened.manifest = { ...manifest, permissions: [...manifest.permissions, "plugin.tool.execute"] };
+    expect(() => reg.publish(widened)).toThrow(/signature/);
+
+    const release = reg.publish(signed(manifest, files));
+    reg.approve(release.releaseId, { tenantId: "tenant-a", actorId: "security-officer" });
+    reg.revokeKey("publisher-1");
+    expect(() => reg.install("tenant-a", release.releaseId)).toThrow(/revoked/);
+    expect(() => reg.publish(signed(manifest, files))).toThrow(/revoked/);
+  });
+
+  it("puts a release with more permissions back into approval", () => {
+    const reg = registry();
+    const first = reg.publish(signed(manifest, files));
+    reg.approve(first.releaseId, { tenantId: "tenant-a", actorId: "security-officer" });
+    const grown = reg.publish(signed({ ...manifest, version: "1.1.0", permissions: [...manifest.permissions, "plugin.tool.execute"] }, files));
+    expect(grown.state).toBe("pending-approval");
+    expect(() => reg.install("tenant-a", grown.releaseId)).toThrow(/unapproved/);
+  });
+
+  it("rejects secrets, path escapes, and oversized entries", () => {
+    const reg = registry();
+    expect(() => reg.publish(signed(manifest, [{ name: "env", bytes: encoder.encode("SECRET=value") }]))).toThrow(/secret/);
+    expect(() => reg.publish(signed(manifest, [{ name: "../etc/passwd", bytes: encoder.encode("x") }]))).toThrow(/archive/);
+    expect(() => reg.publish(signed(manifest, [{ name: "big.bin", bytes: new Uint8Array(2_000_000) }]))).toThrow(/archive/);
+  });
+});

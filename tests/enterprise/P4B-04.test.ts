@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { performAction } from "../../services/enterprise-browser/src/actions.ts";
+import { performAction } from "../../services/enterprise-browser/src/actions";
 
 describe("P4B-04 browser actions", () => {
   it("requires a fresh approval and refuses a CRM bypass", () => {

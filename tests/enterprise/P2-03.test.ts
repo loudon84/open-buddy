@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DirectoryApi, DirectoryConflict } from "../../services/enterprise-workspace/src/directory-api.ts";
+import { DirectoryApi, DirectoryConflict } from "../../services/enterprise-workspace/src/directory-api";
 
 describe("P2-03 directory API", () => {
   it("blocks self-promotion and keeps the older write when revisions clash", () => {

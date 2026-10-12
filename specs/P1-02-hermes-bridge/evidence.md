@@ -13,3 +13,7 @@
 
 - Route rows are JSON with the columns in `migrations/001_routes.sql`. `node:sqlite` failed to load under Vitest (`Failed to load url sqlite`).
 - The verifier is injected. OIDC token checks are not this task.
+
+## Review remediation (2026-10-12)
+
+Session ids are now gateway-minted (`gws_…`); `sess-a` is the upstream id only. Instance and session reads bind workspace. Session reads do not return the upstream URL. See [the review record](../../docs/roadmap/review-2026-10-12.md).

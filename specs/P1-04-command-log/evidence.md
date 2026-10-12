@@ -11,3 +11,7 @@ The same key replayed one receipt and did not create a second run after reload. 
 ## Fixture vs real
 
 This is the gateway command log. It does not prove a real Hermes restart.
+
+## Review remediation (2026-10-12)
+
+Receipts were keyed by idempotency key alone, so a second session reusing a key got the first run. Receipts are now keyed by tenant, workspace, operation, resource, and key. See [the review record](../../docs/roadmap/review-2026-10-12.md).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { retrieveKnowledge } from "../../plugins/knowledge/src/tools.ts";
+import { retrieveKnowledge } from "../../plugins/knowledge/src/tools";
 
 describe("P4A-06 knowledge tools", () => {
   it("cites only the authorized version and refuses when evidence is gone", () => {

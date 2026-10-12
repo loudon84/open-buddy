@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { BrowserRuntime } from "../../services/enterprise-browser/src/runtime.ts";
-import { navigate } from "../../services/enterprise-browser/src/domain-policy.ts";
-import { dispatchBrowser } from "../../services/enterprise-browser/src/executor.ts";
+import { BrowserRuntime } from "../../services/enterprise-browser/src/runtime";
+import { navigate } from "../../services/enterprise-browser/src/domain-policy";
+import { dispatchBrowser } from "../../services/enterprise-browser/src/executor";
 
 describe("P4B-06 browser acceptance", () => {
   it("keeps the fixture chain closed to real sites", () => {

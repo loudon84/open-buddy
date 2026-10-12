@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { classifyMigrationPath, knowledgeBackendContract } from "../../plugins/knowledge/src/backend-contract.ts";
+import { classifyMigrationPath, knowledgeBackendContract } from "../../plugins/knowledge/src/backend-contract";
 
 describe("P4A-01 knowledge migration map", () => {
   it("migrates the HTTP provider, excludes the remote facade, and keeps React 18", () => {

@@ -1,1 +1,1 @@
-export { digest } from "./catalog.ts";
+export { digest, signingPayload } from "./catalog";

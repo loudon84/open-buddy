@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { reduceRuntime, RuntimePanel } from "../../packages/ui/openbuddy-ui-enterprise/src/runtime-panel.tsx";
-import { runtimeShellState } from "../../electron/main/runtime/runtime-coordinator.ts";
+import { reduceRuntime, RuntimePanel } from "../../packages/ui/openbuddy-ui-enterprise/src/runtime-panel";
+import { runtimeShellState } from "../../electron/main/runtime/runtime-coordinator";
 
 describe("P1-06 runtime panel", () => {
   it("distinguishes phases, waits for cancel, and does not fetch Hermes", () => {

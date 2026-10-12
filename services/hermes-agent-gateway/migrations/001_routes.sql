@@ -8,11 +8,12 @@ CREATE TABLE IF NOT EXISTS agent_instances (
   agent_instance_id TEXT NOT NULL,
   upstream_url TEXT NOT NULL,
   capabilities_json TEXT NOT NULL,
-  PRIMARY KEY (tenant_id, agent_instance_id)
+  PRIMARY KEY (tenant_id, workspace_id, agent_instance_id)
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
   session_id TEXT PRIMARY KEY,
+  upstream_session_id TEXT NOT NULL,
   tenant_id TEXT NOT NULL,
   workspace_id TEXT NOT NULL,
   actor_id TEXT NOT NULL,

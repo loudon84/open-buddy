@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createServer } from "node:http";
 import { describe, expect, it } from "vitest";
-import { HermesClient } from "../../packages/runtime/openbuddy-hermes-client/src/client.ts";
-import { RemoteHermesAdapter } from "../../electron/main/runtime/remote-hermes-adapter.ts";
+import { HermesClient } from "../../packages/runtime/openbuddy-hermes-client/src/client";
+import { RemoteHermesAdapter } from "../../electron/main/runtime/remote-hermes-adapter";
 
 async function serve(handler: (req: import("node:http").IncomingMessage, res: import("node:http").ServerResponse) => void) {
   const server = createServer(handler);

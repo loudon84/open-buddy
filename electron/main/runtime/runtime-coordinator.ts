@@ -1,4 +1,4 @@
-import type { RuntimePhase } from "../../../packages/ui/openbuddy-ui-enterprise/src/runtime-panel.tsx";
+import type { RuntimePhase } from "../../../packages/runtime/openbuddy-runtime-adapter/src/types";
 
 export interface RuntimeShellState {
   phase: RuntimePhase;

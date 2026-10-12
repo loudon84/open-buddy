@@ -1,9 +1,9 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { KnowledgePanel } from "../../plugins/knowledge/src/panel.tsx";
-import { KnowledgePlugin } from "../../plugins/knowledge/src/index.ts";
-import { localDocuments } from "../../plugins/knowledge/src/provider.ts";
+import { KnowledgePanel } from "../../plugins/knowledge/src/panel";
+import { KnowledgePlugin } from "../../plugins/knowledge/src/index";
+import { localDocuments } from "../../plugins/knowledge/src/provider";
 
 describe("P4A-02 knowledge provider", () => {
   it("keeps same-titled documents inside the caller tenant and hides the endpoint", async () => {

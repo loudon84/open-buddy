@@ -1,2 +1,2 @@
-export type { PreviewHandle, PreviewProvider } from "./resolve.ts";
-export { resolvePreview } from "./resolve.ts";
+export type { PreviewHandle, PreviewProvider } from "./resolve";
+export { resolvePreview } from "./resolve";

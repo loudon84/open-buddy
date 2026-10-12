@@ -1,4 +1,4 @@
-import { validateEnterpriseManifest, type EnterpriseManifest } from "./enterprise-contract.ts";
+import { validateEnterpriseManifest, type EnterpriseManifest } from "./enterprise-contract";
 
 export const supportedSurfaces = ["renderer", "tool"] as const;
 export const knownPermissions = ["plugin.session.read", "plugin.tool.execute"] as const;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dispatchBrowser } from "../../services/enterprise-browser/src/executor.ts";
+import { dispatchBrowser } from "../../services/enterprise-browser/src/executor";
 
 describe("P4B-05 browser executor", () => {
   it("refuses CDP and an offline desktop executor", () => {

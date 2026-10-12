@@ -1,24 +1,24 @@
 import { readFile } from "node:fs/promises";
-import type { PiSessionRuntime } from "../agent/pi-session-runtime.ts";
-import { readPiJsonl, type LocalPiPort } from "./local-pi-adapter.ts";
+import type { PiSessionRuntime } from "../agent/pi-session-runtime";
+import { readPiJsonl, type LocalPiPort } from "./local-pi-adapter";
 
 /**
  * Binds the existing PiSessionRuntime without rewriting its JSONL history.
- * Continue and send stay on the host that already owns the session file.
+ * Continue, send, events, and permission replies stay on the host that already owns the session.
+ * PiSessionRuntime.subscribe holds a single handler, so the host fans its events out here.
  */
 export function bindLocalPiRuntime(
   runtime: PiSessionRuntime,
-  host: {
-    continueSession(sessionPath: string): Promise<{ sessionId: string; sessionPath: string }>;
-    send(text: string): Promise<{ runId: string }>;
-  },
+  host: Pick<LocalPiPort, "continueSession" | "send" | "subscribe" | "respondPermission">,
 ): LocalPiPort {
   return {
     loadEntries: readPiJsonl,
     continueSession: host.continueSession,
     send: host.send,
+    subscribe: host.subscribe,
+    respondPermission: host.respondPermission,
     async abort() {
-      await runtime.dispose({ abort: true });
+      await runtime.session?.abort();
     },
   };
 }

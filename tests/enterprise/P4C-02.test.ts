@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CrmDirectory } from "../../services/enterprise-crm/src/directory.ts";
+import { CrmDirectory } from "../../services/enterprise-crm/src/directory";
 
 describe("P4C-02 customer read", () => {
   it("returns names for the caller tenant and no token", () => {

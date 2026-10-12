@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export interface ObjectType {
   name: string;
   schemaVersion: number;
@@ -24,25 +26,72 @@ export interface Relation {
   tenantId: string;
 }
 
-export function queryRelations(rows: Relation[], tenantId: string, grant: boolean): Relation[] {
-  if (!grant) throw new Error("acl");
-  return rows.filter((row) => row.tenantId === tenantId);
+export interface Caller {
+  tenantId: string;
+  actorId: string;
+}
+
+export function queryRelations(rows: Relation[], caller: Caller, grants: (caller: Caller) => boolean): Relation[] {
+  if (!grants(caller)) throw new Error("acl");
+  return rows.filter((row) => row.tenantId === caller.tenantId);
+}
+
+export interface QuoteLine {
+  sku: string;
+  quantity: number;
+  unitPrice: number;
 }
 
 export interface Quote {
   id: string;
+  tenantId: string;
+  lines: QuoteLine[];
+  digest: string;
   prepared: boolean;
   committed: boolean;
   compensated: boolean;
+  approvedBy?: string;
 }
 
-export function prepareQuote(id: string): Quote {
-  return { id, prepared: true, committed: false, compensated: false };
+export interface QuoteApproval {
+  quoteId: string;
+  tenantId: string;
+  digest: string;
+  approverId: string;
+  decision: "approve" | "reject";
 }
 
-export function commitQuote(quote: Quote, approved: boolean): Quote {
-  if (!quote.prepared || !approved) {
-    return { ...quote, committed: false, compensated: true };
+export class QuoteBook {
+  private readonly quotes = new Map<string, Quote>();
+
+  constructor(private readonly trust: { approvers: Map<string, Set<string>> }) {}
+
+  prepare(input: { tenantId: string; id: string; lines: QuoteLine[] }): Quote {
+    const key = JSON.stringify([input.tenantId, input.id]);
+    if (this.quotes.has(key)) throw new Error("quote already prepared");
+    const lines = input.lines.map((line) => ({ ...line }));
+    const digest = createHash("sha256").update(JSON.stringify([input.tenantId, input.id, lines])).digest("hex");
+    const quote: Quote = { id: input.id, tenantId: input.tenantId, lines, digest, prepared: true, committed: false, compensated: false };
+    this.quotes.set(key, quote);
+    return { ...quote };
   }
-  return { ...quote, committed: true };
+
+  commit(tenantId: string, id: string, approval: QuoteApproval): Quote | null {
+    const quote = this.quotes.get(JSON.stringify([tenantId, id]));
+    if (!quote) return null;
+    if (quote.committed || quote.compensated) throw new Error("quote already settled");
+    const trusted =
+      approval.decision === "approve" &&
+      approval.quoteId === quote.id &&
+      approval.tenantId === quote.tenantId &&
+      approval.digest === quote.digest &&
+      (this.trust.approvers.get(quote.tenantId)?.has(approval.approverId) ?? false);
+    if (trusted) {
+      quote.committed = true;
+      quote.approvedBy = approval.approverId;
+    } else {
+      quote.compensated = true;
+    }
+    return { ...quote };
+  }
 }

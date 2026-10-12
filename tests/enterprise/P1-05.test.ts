@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SessionCoordinator } from "../../electron/main/runtime/session-coordinator.ts";
+import { SessionCoordinator } from "../../electron/main/runtime/session-coordinator";
 
 describe("P1-05 session projection", () => {
   it("drops duplicate seq, fills gaps from a snapshot, and keeps runtimes apart", () => {

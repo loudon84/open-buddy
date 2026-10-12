@@ -6,11 +6,13 @@ export interface StoredReceipt {
   bodyHash: string;
 }
 
+export type Terminal = "cancelled" | "completed" | "failed";
+
 interface Snapshot {
   receipts: Record<string, StoredReceipt>;
   seq: number;
   events: Array<{ seq: number; runId: string; type: string }>;
-  terminals: Record<string, "cancelled" | "completed">;
+  terminals: Record<string, Terminal>;
   approvals: Record<string, { expiresAt: number; paramsHash: string; decision?: "approve" | "reject" }>;
   reconciliation: Array<{ id: string; detail: unknown }>;
   tails?: never;
@@ -24,6 +26,21 @@ export class CommandConflict extends Error {
   }
 }
 
+export interface CommandScope {
+  tenantId: string;
+  workspaceId: string;
+  operation: string;
+  resourceId: string;
+}
+
+export class CommandInvalid extends Error {
+  readonly status = 400;
+  constructor(message: string) {
+    super(message);
+    this.name = "CommandInvalid";
+  }
+}
+
 export class CommandLog {
   private tails = new Map<string, Promise<void>>();
 
@@ -31,7 +48,17 @@ export class CommandLog {
     this.write(this.read());
   }
 
-  async execute<T extends { runId: string }>(key: string, bodyHash: string, create: () => Promise<T>): Promise<T & { status: "accepted" }> {
+  async execute<T extends { runId: string }>(
+    scope: CommandScope,
+    idempotencyKey: string,
+    bodyHash: string,
+    create: () => Promise<T>,
+  ): Promise<T & { status: "accepted" }> {
+    if (!idempotencyKey) throw new CommandInvalid("idempotency key is required");
+    for (const part of [scope.tenantId, scope.workspaceId, scope.operation, scope.resourceId]) {
+      if (!part) throw new CommandInvalid("command scope is incomplete");
+    }
+    const key = JSON.stringify([scope.tenantId, scope.workspaceId, scope.operation, scope.resourceId, idempotencyKey]);
     const existing = this.read().receipts[key];
     if (existing) {
       if (existing.bodyHash !== bodyHash) throw new CommandConflict("idempotency key reused with a different body");
@@ -50,7 +77,11 @@ export class CommandLog {
     return { ...created, status: "accepted" };
   }
 
-  async finish(runId: string, terminal: "cancelled" | "completed"): Promise<"cancelled" | "completed"> {
+  terminalOf(runId: string): Terminal | null {
+    return this.read().terminals[runId] ?? null;
+  }
+
+  async finish(runId: string, terminal: Terminal): Promise<Terminal> {
     const previous = this.tails.get(runId) ?? Promise.resolve();
     let release: () => void = () => {};
     const gate = new Promise<void>((resolve) => {
@@ -64,7 +95,7 @@ export class CommandLog {
       if (current) return current;
       snapshot.terminals[runId] = terminal;
       snapshot.seq += 1;
-      snapshot.events.push({ seq: snapshot.seq, runId, type: terminal === "cancelled" ? "run.cancelled" : "run.completed" });
+      snapshot.events.push({ seq: snapshot.seq, runId, type: `run.${terminal}` });
       this.write(snapshot);
       return terminal;
     } finally {
@@ -87,6 +118,7 @@ export class CommandLog {
 
   openApproval(input: { id: string; expiresAt: number; paramsHash: string }): void {
     const snapshot = this.read();
+    if (snapshot.approvals[input.id]) return;
     snapshot.approvals[input.id] = { expiresAt: input.expiresAt, paramsHash: input.paramsHash };
     this.write(snapshot);
   }

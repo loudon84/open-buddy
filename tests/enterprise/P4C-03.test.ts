@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDraft } from "../../services/enterprise-crm/src/drafts.ts";
+import { createDraft } from "../../services/enterprise-crm/src/drafts";
 
 describe("P4C-03 CRM drafts", () => {
   it("keeps a browser or knowledge source uncommitted", () => {

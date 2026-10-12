@@ -11,7 +11,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | Phase | Tasks | Exit | Status |
 | --- | --- | --- | --- |
 | 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
-| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; fixture drill recorded; D11 unmeasured |
+| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; loopback main chain recorded; desktop wiring open (P1-06); D11 unmeasured |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
@@ -21,6 +21,8 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 4E | P4E-01–P4E-05 | Ontology prepare/commit and yearly evidence; real ERP waits on D08 | fixture chain recorded; D08 unset |
 
 Production gates stay closed. `done-fixture` does not flip a phase exit to passed when that exit needs a real environment.
+
+The 2026-10-12 branch review and its remediation are in [review-2026-10-12.md](review-2026-10-12.md).
 
 ## External blocks
 
@@ -44,31 +46,31 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P0-04 | P0-02, P0-03 | done | specs/P0-04-runtime-contract/evidence.md | Project /v1 contract only; not an upstream probe |
 | P0-05 | P0-02, P0-04 | done | specs/P0-05-workspace-plugin-contract/evidence.md | D01 roles; sandbox fail-closed; not the Phase 2 service |
 | P0-06 | P0-04, P0-05 | done | docs/architecture/validation-baseline.md | Packages discovered. typecheck/lint/build 0. vitest exit 1 kept. Tenant script exit 2 without tokens |
-| P1-01 | P0-06 | done | specs/P1-01-local-pi-adapter/evidence.md | Local scope only; fixture adapter cannot be the default |
-| P1-02 | P0-04, P0-06 | done-fixture | specs/P1-02-hermes-bridge/evidence.md | Real HTTP gateway; loopback upstream only; D03 unprobed |
-| P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Major check, single-flight 401, 403, Retry-After; token not logged |
-| P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Replay, one terminal, approval rejection, reconciliation |
+| P1-01 | P0-06 | done | specs/P1-01-local-pi-adapter/evidence.md | Local scope only; stream and approval go through the host port (review 2026-10-12) |
+| P1-02 | P0-04, P0-06 | done-fixture | specs/P1-02-hermes-bridge/evidence.md | Workspace-bound routes, gateway session ids; loopback upstream only; D03 unprobed |
+| P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Full RemoteHermesAdapter; loopback main chain test; token not logged |
+| P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Receipts scoped by tenant, workspace, operation, resource; one terminal |
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
-| P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Phase slot; not mounted in legacy App.tsx |
+| P1-06 | P1-05 | in-progress | specs/P1-06-runtime-panel/evidence.md | Reopened by review 2026-10-12: panel not mounted in App.tsx; no IPC or preload channel |
 | P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
 | P1-08 | P1-07 | done-fixture | specs/P1-08-runtime-operations/evidence.md | Flag rollback drill; no deploy; D11 unmeasured |
 | P2-01 | P1-08 | done | specs/P2-01-workspace-model/evidence.md | Membership rows; Pi history not migrated |
 | P2-02 | P2-01 | done | specs/P2-02-authorization/evidence.md | D01 grants; admin is not an implicit document read |
 | P2-03 | P2-02 | done | specs/P2-03-directory-api/evidence.md | No self-promotion; stale revision 409 |
 | P2-04 | P2-02, P1-04 | done | specs/P2-04-task-projection/evidence.md | Duplicate events ignored; artifact revoke denies |
-| P2-05 | P2-03, P2-04 | done | specs/P2-05-workspace-shell/evidence.md | Scope switch drops stale items; not mounted in App.tsx |
+| P2-05 | P2-03, P2-04 | in-progress | specs/P2-05-workspace-shell/evidence.md | Reopened by review 2026-10-12: not mounted in App.tsx |
 | P2-06 | P2-03, P2-04 | done | specs/P2-06-audit-retention/evidence.md | Physical delete blocked until D02 is signed |
 | P2-07 | P2-05, P2-06 | done | specs/P2-07-isolation/evidence.md | Nine fixture paths; D01/D02 unsigned |
 | P3-01 | P2-07, P0-05 | done | specs/P3-01-enterprise-manifest/evidence.md | Legacy alias does not widen grants |
-| P3-02 | P3-01, P2-02 | done | specs/P3-02-plugin-broker/evidence.md | Grant rechecked at call time; no direct Hermes URL |
+| P3-02 | P3-01, P2-02 | done | specs/P3-02-plugin-broker/evidence.md | Handler runs with scope and signal; grant rechecked per call; timeout |
 | P3-03 | P3-02 | done | specs/P3-03-isolated-ui/evidence.md | Sandboxed frame; scope change clears menus |
 | P3-04 | P3-02 | done-fixture | specs/P3-04-container-gate/evidence.md | Policy gate only; no container daemon |
-| P3-05 | P3-01, P2-02 | done | specs/P3-05-plugin-registry/evidence.md | Private catalog; new permission clears approval; D09 unsigned |
+| P3-05 | P3-01, P2-02 | done | specs/P3-05-plugin-registry/evidence.md | Ed25519 signature and tenant approver list; D09 keys unsigned |
 | P3-06 | P3-03, P3-04, P3-05 | done | specs/P3-06-plugin-lifecycle/evidence.md | Failed upgrade keeps the old version |
 | P3-07 | P3-06 | done-fixture | specs/P3-07-plugin-fixtures/evidence.md | Fixture chain; staging exits 2; no container daemon |
 | P4A-01 | P3-07, P0-01 | done-fixture | specs/P4A-01-knowledge-map/evidence.md | HTTP provider mapped; facade excluded; D04 unprobed |
 | P4A-02 | P4A-01 | done-fixture | specs/P4A-02-knowledge-provider/evidence.md | Tenant filter in the provider; D04 unprobed |
-| P4A-03 | P4A-02 | done-fixture | specs/P4A-03-ingestion/evidence.md | Idempotent upload and three-store delete; D04 unsigned |
+| P4A-03 | P4A-02 | done-fixture | specs/P4A-03-ingestion/evidence.md | Tenant-scoped upload key and content conflict; D04 unsigned |
 | P4A-04 | P4A-03 | done | specs/P4A-04-preview-contract/evidence.md | Three providers; remote local paths refused |
 | P4A-05 | P4A-04 | done | specs/P4A-05-preview-safety/evidence.md | Six formats; script, MIME, SSRF, and path checks |
 | P4A-06 | P4A-03, P4A-05 | done-fixture | specs/P4A-06-knowledge-tools/evidence.md | Citations from the authorized version; D04 unprobed |
@@ -82,14 +84,14 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4C-01 | P4B-06 | done-fixture | specs/P4C-01-crm-map/evidence.md | Required fields unset; external id is tenant-bound |
 | P4C-02 | P4C-01 | done-fixture | specs/P4C-02-crm-read/evidence.md | Same external id stays inside the caller tenant |
 | P4C-03 | P4C-02, P4A-06 | done | specs/P4C-03-crm-drafts/evidence.md | Drafts stay uncommitted and source-scoped |
-| P4C-04 | P4C-03 | done-fixture | specs/P4C-04-crm-outbox/evidence.md | Approval, replay, and reconciliation; D06 unprobed |
+| P4C-04 | P4C-03 | done-fixture | specs/P4C-04-crm-outbox/evidence.md | Approval record bound to tenant and body; reconcile by key; D06 unprobed |
 | P4C-05 | P4C-04 | done-fixture | specs/P4C-05-crm-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
 | P4D-01 | P4C-05 | done-fixture | specs/P4D-01-metric-contract/evidence.md | Unsigned fixture expression; D07 unprobed |
-| P4D-02 | P4D-01 | done | specs/P4D-02-metric-cache/evidence.md | Tenant totals and a hard query limit |
+| P4D-02 | P4D-01 | done | specs/P4D-02-metric-cache/evidence.md | Per-actor metric and region policy; cache keyed by actor and policy version |
 | P4D-03 | P4D-02 | done | specs/P4D-03-metric-explain/evidence.md | Explain names the metric; export needs a grant |
 | P4D-04 | P4D-03 | done-fixture | specs/P4D-04-bi-acceptance/evidence.md | Fixture totals; staging exits 2; phase stays open |
 | P4E-01 | P4D-04 | done-fixture | specs/P4E-01-object-catalog/evidence.md | Older schema rejected; D08 unset |
-| P4E-02 | P4E-01 | done | specs/P4E-02-relations/evidence.md | Relations stay inside the caller tenant |
-| P4E-03 | P4E-02, P4C-04 | done-fixture | specs/P4E-03-quotes/evidence.md | Unapproved commit compensates; D08 unset |
+| P4E-02 | P4E-01 | done | specs/P4E-02-relations/evidence.md | Relations ask a policy source; stay inside the caller tenant |
+| P4E-03 | P4E-02, P4C-04 | done-fixture | specs/P4E-03-quotes/evidence.md | Commit needs a tenant approver on the quote digest; D08 unset |
 | P4E-04 | P4E-03 | done-fixture | specs/P4E-04-ontology-security/evidence.md | Cross-tenant object and relation reads are empty |
 | P4E-05 | P4E-04 | done-fixture | specs/P4E-05-yearly-journey/evidence.md | Fixture journey; staging exits 2; phase stays open |

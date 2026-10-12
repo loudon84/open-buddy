@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PluginLifecycle, type InstallSnapshot } from "../../packages/runtime/openbuddy-plugin-host/src/installation-store.ts";
+import { PluginLifecycle, type InstallSnapshot } from "../../packages/runtime/openbuddy-plugin-host/src/installation-store";
 
 const policy = { minSchema: 2, allowed: ["plugin.session.read"] };
 const v1: InstallSnapshot = { version: "1.0.0", schema: 2, permissions: ["plugin.session.read"], routes: ["home"], tools: ["read"], mcp: ["mcp"], business: ["notes"] };

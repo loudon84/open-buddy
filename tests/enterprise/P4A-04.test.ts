@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolvePreview } from "../../packages/capability/openbuddy-file-preview/src/resolve.ts";
+import { resolvePreview } from "../../packages/capability/openbuddy-file-preview/src/resolve";
 
 describe("P4A-04 preview contract", () => {
   it("denies the wrong tenant, a revoked handle, and a remote local path", () => {

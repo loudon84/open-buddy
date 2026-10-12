@@ -1,4 +1,4 @@
-import type { Membership, WorkspaceRole } from "./models.ts";
+import type { Membership, WorkspaceRole } from "./models";
 
 const grants: Record<WorkspaceRole, string[]> = {
   "tenant-admin": ["workspace.member.manage"],

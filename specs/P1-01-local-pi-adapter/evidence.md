@@ -23,3 +23,7 @@
 ## Limits
 
 `bindLocalPiRuntime` delegates continue and send to the existing host. It does not rewrite session files.
+
+## Review remediation (2026-10-12)
+
+`stream` yields host events with `afterSeq` resume. `resolveApproval` needs a pending request id and calls the host. Cancel aborts the turn instead of disposing the session. See [the review record](../../docs/roadmap/review-2026-10-12.md).

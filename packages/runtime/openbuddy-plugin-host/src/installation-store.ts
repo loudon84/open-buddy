@@ -1,2 +1,2 @@
-export { PluginLifecycle } from "./enterprise-lifecycle.ts";
-export type { InstallSnapshot } from "./enterprise-lifecycle.ts";
+export { PluginLifecycle } from "./enterprise-lifecycle";
+export type { InstallSnapshot } from "./enterprise-lifecycle";

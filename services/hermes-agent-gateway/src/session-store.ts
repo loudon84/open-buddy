@@ -19,6 +19,7 @@ export interface InstanceRow {
 
 export interface SessionRow {
   sessionId: string;
+  upstreamSessionId: string;
   tenantId: string;
   workspaceId: string;
   actorId: string;
@@ -43,14 +44,20 @@ export class RouteStore {
 
   saveInstance(row: InstanceRow): void {
     const snapshot = this.read();
-    const index = snapshot.agentInstances.findIndex((item) => item.tenantId === row.tenantId && item.agentInstanceId === row.agentInstanceId);
+    const index = snapshot.agentInstances.findIndex(
+      (item) => item.tenantId === row.tenantId && item.workspaceId === row.workspaceId && item.agentInstanceId === row.agentInstanceId,
+    );
     if (index >= 0) snapshot.agentInstances[index] = row;
     else snapshot.agentInstances.push(row);
     this.write(snapshot);
   }
 
-  findInstance(tenantId: string, agentInstanceId: string): InstanceRow | null {
-    return this.read().agentInstances.find((item) => item.tenantId === tenantId && item.agentInstanceId === agentInstanceId) ?? null;
+  findInstance(tenantId: string, workspaceId: string, agentInstanceId: string): InstanceRow | null {
+    return (
+      this.read().agentInstances.find(
+        (item) => item.tenantId === tenantId && item.workspaceId === workspaceId && item.agentInstanceId === agentInstanceId,
+      ) ?? null
+    );
   }
 
   saveSession(row: SessionRow): void {
@@ -59,8 +66,12 @@ export class RouteStore {
     this.write(snapshot);
   }
 
-  findSession(sessionId: string): SessionRow | null {
-    return this.read().sessions.find((item) => item.sessionId === sessionId) ?? null;
+  findSession(tenantId: string, workspaceId: string, sessionId: string): SessionRow | null {
+    return (
+      this.read().sessions.find(
+        (item) => item.tenantId === tenantId && item.workspaceId === workspaceId && item.sessionId === sessionId,
+      ) ?? null
+    );
   }
 
   close(): void {}

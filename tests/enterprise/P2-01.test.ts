@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { WorkspaceDirectory } from "../../services/enterprise-workspace/src/models.ts";
+import { WorkspaceDirectory } from "../../services/enterprise-workspace/src/models";
 
 describe("P2-01 workspace model", () => {
   it("allows multi-tenant membership and refuses a cycle, a cross-tenant link, and Pi migration", () => {

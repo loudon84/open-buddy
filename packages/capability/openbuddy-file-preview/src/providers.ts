@@ -1,1 +1,1 @@
-export { resolvePreview } from "./resolve.ts";
+export { resolvePreview } from "./resolve";

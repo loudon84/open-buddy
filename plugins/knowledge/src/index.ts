@@ -1,1 +1,1 @@
-export { KnowledgePlugin } from "./provider.ts";
+export { KnowledgePlugin } from "./provider";

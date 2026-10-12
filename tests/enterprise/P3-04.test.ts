@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { installBackend, launch, type ContainerRuntime } from "../../services/enterprise-plugin-worker/src/broker.ts";
+import { installBackend, launch, type ContainerRuntime } from "../../services/enterprise-plugin-worker/src/broker";
 
 const runtime: ContainerRuntime = { kind: "container", run: () => ({ ok: true }) };
 const profile = { user: "plugin", readonlyRootfs: true, network: false, hostFs: false, secrets: [], timeoutMs: 1000, cpuMillis: 100, memoryMb: 128 };

@@ -3,9 +3,9 @@ import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { IsolatedUiHost } from "../../packages/runtime/openbuddy-plugin-host/src/isolated-ui-host.ts";
-import { serializeSlotTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest.ts";
-import { PluginSurface } from "../../packages/ui/openbuddy-ui-enterprise/src/plugin-surface.tsx";
+import { IsolatedUiHost } from "../../packages/runtime/openbuddy-plugin-host/src/isolated-ui-host";
+import { serializeSlotTrack } from "../../packages/runtime/openbuddy-plugin-host/src/openbuddy-plugin-manifest";
+import { PluginSurface } from "../../packages/ui/openbuddy-ui-enterprise/src/plugin-surface";
 
 describe("P3-03 isolated plugin surface", () => {
   it("drops host access, clears the old scope, and keeps the trusted slot serializer", () => {
