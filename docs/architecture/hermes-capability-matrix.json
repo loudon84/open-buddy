@@ -1,0 +1,58 @@
+{
+  "schema": "openbuddy.hermes-capability-matrix.v1",
+  "probed": false,
+  "profile": "fixtures",
+  "reason": "No D03 staging environment was provided. No production data was used. Nothing here is contract-tested.",
+  "sourceHead": "68de354235f2796da8c89b869a9db70955fae20e",
+  "capabilities": [
+    {
+      "id": "chat-completions",
+      "status": "observed-client",
+      "evidence": "apps/work/src/main/hermes.ts calls /v1/chat/completions",
+      "serverImplemented": "unknown",
+      "blocks": []
+    },
+    {
+      "id": "run-events",
+      "status": "observed-client",
+      "evidence": "hermes.ts uses /v1/runs/{id}/events; skill-run-gateway-client.ts uses /api/v1/runs/{id}/events. These are different client paths, not one confirmed upstream path.",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    },
+    {
+      "id": "cancel",
+      "status": "observed-client",
+      "evidence": "hermes.ts posts /v1/runs/{id}/stop; skill-run-gateway-client.ts posts /api/v1/runs/{id}/cancel. Path is not unified.",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    },
+    {
+      "id": "approval",
+      "status": "observed-client",
+      "evidence": "skill-run-gateway-client.ts posts /api/v1/runs/{run}/approvals/{approval}/decision",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    },
+    {
+      "id": "artifact",
+      "status": "observed-client",
+      "evidence": "skill-run-gateway-client.ts reads /api/v1/runs/{id}/artifacts",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    },
+    {
+      "id": "auth",
+      "status": "observed-client",
+      "evidence": "skill-run-gateway-client.ts uses AuthorizedBackendTransport.authorizedFetch. Token storage was not probed.",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    },
+    {
+      "id": "resume",
+      "status": "unsupported",
+      "evidence": "No upstream resume HTTP call in apps/work/src/main/hermes.ts or skill-run-gateway-client.ts. Local session resume exists and is not this capability.",
+      "serverImplemented": "unknown",
+      "blocks": ["e2e"]
+    }
+  ]
+}
