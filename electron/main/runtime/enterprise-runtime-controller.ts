@@ -22,6 +22,14 @@ export interface EnterpriseRuntimeDeps {
 
 const loopbackHosts = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split(".").map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [first, second] = parts;
+  if (first === 10 || (first === 192 && second === 168)) return true;
+  return first === 172 && second >= 16 && second <= 31;
+}
+
 export function resolveGatewayEndpoint(raw: string | undefined): string | undefined {
   const value = raw?.trim();
   if (!value) return undefined;
@@ -32,7 +40,8 @@ export function resolveGatewayEndpoint(raw: string | undefined): string | undefi
     return undefined;
   }
   if (url.username || url.password) return undefined;
-  if (url.protocol === "https:" || (url.protocol === "http:" && loopbackHosts.has(url.hostname))) return url.origin;
+  const httpAllowed = loopbackHosts.has(url.hostname) || isPrivateIpv4(url.hostname);
+  if (url.protocol === "https:" || (url.protocol === "http:" && httpAllowed)) return url.origin;
   return undefined;
 }
 

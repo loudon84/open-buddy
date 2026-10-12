@@ -26,9 +26,12 @@ const signedIn = { tenantId: "t1", actorId: "alice" };
 const tokens = { getAccessToken: async () => "member", refresh: async () => "member" };
 
 describe("enterprise runtime controller in the desktop main process", () => {
-  it("accepts https gateways and plain http only on loopback", () => {
+  it("accepts https gateways and plain http on loopback or a private LAN", () => {
     expect(resolveGatewayEndpoint("https://gw.example.com/base")).toBe("https://gw.example.com");
     expect(resolveGatewayEndpoint("http://127.0.0.1:8080")).toBe("http://127.0.0.1:8080");
+    expect(resolveGatewayEndpoint("http://192.168.102.247:4510")).toBe("http://192.168.102.247:4510");
+    expect(resolveGatewayEndpoint("http://10.1.2.3:4510")).toBe("http://10.1.2.3:4510");
+    expect(resolveGatewayEndpoint("http://8.8.8.8")).toBeUndefined();
     expect(resolveGatewayEndpoint("http://gw.example.com")).toBeUndefined();
     expect(resolveGatewayEndpoint("https://user:pw@gw.example.com")).toBeUndefined();
     expect(resolveGatewayEndpoint("file:///etc/passwd")).toBeUndefined();

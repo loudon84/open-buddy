@@ -1,14 +1,22 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
 
+function installedElectron(projectRoot) {
+  const pathFile = join(projectRoot, "node_modules/electron/path.txt");
+  if (!existsSync(pathFile)) return "";
+  return join(projectRoot, "node_modules/electron/dist", readFileSync(pathFile, "utf8").trim());
+}
+
 function candidates() {
   const values = [
     process.env.OPENBUDDY_ELECTRON_EXEC_PATH,
     process.env.ELECTRON_EXEC_PATH,
+    installedElectron(root),
+    join(root, "node_modules/electron/dist/electron.exe"),
     join(root, "node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"),
     join(root, "node_modules/electron/dist/electron"),
     "/Applications/Electron.app/Contents/MacOS/Electron",
@@ -24,6 +32,17 @@ function candidates() {
   return values.filter((value) => typeof value === "string" && value.length > 0);
 }
 
+function localGatewayUrl(projectRoot) {
+  const file = join(projectRoot, ".env.local");
+  if (!existsSync(file)) return "";
+  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+    const match = line.match(/^\s*OPENBUDDY_ENTERPRISE_GATEWAY_URL\s*=\s*(.*?)\s*$/);
+    if (!match || match[1].startsWith("#")) continue;
+    return match[1].replace(/^["']|["']$/g, "");
+  }
+  return "";
+}
+
 const electronPath = candidates().find((candidate) => existsSync(candidate));
 if (!electronPath) {
   console.error("OpenBuddy 开发启动失败：未找到可用的 Electron runtime。");
@@ -33,7 +52,11 @@ if (!electronPath) {
 
 const child = spawn(process.execPath, [join(root, "node_modules/electron-vite/bin/electron-vite.js"), "dev"], {
   cwd: root,
-  env: { ...process.env, ELECTRON_EXEC_PATH: electronPath },
+  env: {
+    ...process.env,
+    ELECTRON_EXEC_PATH: electronPath,
+    OPENBUDDY_ENTERPRISE_GATEWAY_URL: process.env.OPENBUDDY_ENTERPRISE_GATEWAY_URL || localGatewayUrl(root),
+  },
   stdio: "inherit",
 });
 child.once("error", (error) => {
