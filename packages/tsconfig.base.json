@@ -23,6 +23,8 @@
       "@openbuddy/collaboration-coordinator": ["../collaboration/openbuddy-coordinator/src/index.ts"]
       ,"@openbuddy/collaboration-network": ["../collaboration/openbuddy-network/src/index.ts"],
       "@openbuddy/storage": ["../runtime/openbuddy-storage/src/index.ts"],
+      "@openbuddy/runtime-adapter": ["../runtime/openbuddy-runtime-adapter/src/types.ts"],
+      "@openbuddy/workspace": ["../runtime/openbuddy-workspace/src/types.ts"],
       "@openbuddy/shared-types": ["../shared/openbuddy-types/src/index.ts"],
       "@openbuddy/auth-casdoor": ["../auth/openbuddy-casdoor/src/index.ts"]
     }

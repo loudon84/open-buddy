@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "outDir": "./dist",
+    "paths": {
+      "@openbuddy/runtime-adapter": ["../openbuddy-runtime-adapter/src/types.ts"]
+    }
+  },
+  "include": ["./src/**/*.ts"]
+}

@@ -10,7 +10,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 
 | Phase | Tasks | Exit | Status |
 | --- | --- | --- | --- |
-| 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | blocked on P0-06 install |
+| 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
 | 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | open |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | open |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | open |
@@ -43,7 +43,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P0-03 | P0-01 | done-fixture | specs/P0-03-hermes-matrix/evidence.md | Client observations only; D03 staging not probed |
 | P0-04 | P0-02, P0-03 | done | specs/P0-04-runtime-contract/evidence.md | Project /v1 contract only; not an upstream probe |
 | P0-05 | P0-02, P0-04 | done | specs/P0-05-workspace-plugin-contract/evidence.md | D01 roles; sandbox fail-closed; not the Phase 2 service |
-| P0-06 | P0-04, P0-05 | blocked | specs/P0-06-verification-pipeline/evidence.md | No lockfile or node_modules. typecheck started an install and was stopped. Phase 0 cannot exit |
+| P0-06 | P0-04, P0-05 | done | docs/architecture/validation-baseline.md | Packages discovered. typecheck/lint/build 0. vitest exit 1 kept. Tenant script exit 2 without tokens |
 | P1-01 | P0-06 | pending |  | LocalPiAdapter |
 | P1-02 | P0-04, P0-06 | pending |  | Hermes compatibility bridge |
 | P1-03 | P1-02 | pending |  | Secure transport and RemoteHermesAdapter |

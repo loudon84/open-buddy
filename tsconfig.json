@@ -120,6 +120,12 @@
       "@openbuddy/plugin-sdk": [
         "./packages/runtime/openbuddy-plugin-sdk/src/index.ts"
       ],
+      "@openbuddy/runtime-adapter": [
+        "./packages/runtime/openbuddy-runtime-adapter/src/types.ts"
+      ],
+      "@openbuddy/workspace": [
+        "./packages/runtime/openbuddy-workspace/src/types.ts"
+      ],
       "@openbuddy/renderer-host": [
         "./packages/renderer/openbuddy-renderer-host/src/index.ts"
       ],
