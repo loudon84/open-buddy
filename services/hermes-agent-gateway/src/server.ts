@@ -1,4 +1,5 @@
 import { createServer, type IncomingHttpHeaders, type Server } from "node:http";
+import { CommandConflict, CommandLog } from "./command-log.ts";
 import { callUpstream } from "./upstream-adapter.ts";
 import { RouteStore, type InstanceCapabilities } from "./session-store.ts";
 
@@ -34,6 +35,7 @@ export async function startGateway(options: {
   verify: (headers: IncomingHttpHeaders) => VerifiedIdentity | null;
 }): Promise<Gateway> {
   const store = new RouteStore(options.dbPath);
+  const commands = new CommandLog(`${options.dbPath}.commands.json`);
   const server: Server = createServer(async (req, res) => {
     const send = (status: number, body: unknown) => {
       res.writeHead(status, { "content-type": "application/json" });
@@ -118,11 +120,22 @@ export async function startGateway(options: {
           send(notFound().status, notFound().body);
           return;
         }
-        const upstream = await callUpstream(session.upstreamUrl, `/v1/sessions/${session.sessionId}/messages`, {
-          method: "POST",
-          body: { text: body.text },
-        });
-        send(202, { sessionId: session.sessionId, runId: upstream.body.runId, status: "accepted", traceId: "trace-send" });
+        try {
+          const receipt = await commands.execute(String(req.headers["idempotency-key"] ?? ""), JSON.stringify(body), async () => {
+            const upstream = await callUpstream(session.upstreamUrl, `/v1/sessions/${session.sessionId}/messages`, {
+              method: "POST",
+              body: { text: body.text },
+            });
+            return { sessionId: session.sessionId, runId: String(upstream.body.runId), traceId: "trace-send" };
+          });
+          send(202, receipt);
+        } catch (error) {
+          if (error instanceof CommandConflict) {
+            send(409, { error: { code: "CONFLICT", message: error.message, retryable: false, traceId: "trace-key" } });
+            return;
+          }
+          throw error;
+        }
         return;
       }
 
