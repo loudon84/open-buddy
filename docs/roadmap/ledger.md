@@ -68,7 +68,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P3-07 | P3-06 | done-fixture | specs/P3-07-plugin-fixtures/evidence.md | Fixture chain; staging exits 2; no container daemon |
 | P4A-01 | P3-07, P0-01 | done-fixture | specs/P4A-01-knowledge-map/evidence.md | HTTP provider mapped; facade excluded; D04 unprobed |
 | P4A-02 | P4A-01 | done-fixture | specs/P4A-02-knowledge-provider/evidence.md | Tenant filter in the provider; D04 unprobed |
-| P4A-03 | P4A-02 | pending |  | Ingestion, version, delete |
+| P4A-03 | P4A-02 | done-fixture | specs/P4A-03-ingestion/evidence.md | Idempotent upload and three-store delete; D04 unsigned |
 | P4A-04 | P4A-03 | pending |  | Preview contract |
 | P4A-05 | P4A-04 | pending |  | Six-format preview |
 | P4A-06 | P4A-03, P4A-05 | pending |  | Knowledge tools and citations |
