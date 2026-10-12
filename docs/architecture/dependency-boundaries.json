@@ -1,0 +1,36 @@
+{
+  "schema": "openbuddy.enterprise-boundaries.v1",
+  "owners": [
+    {
+      "id": "desktop-main",
+      "owns": ["local-pi", "preload-bridge", "credential-ref", "browser-process"]
+    },
+    {
+      "id": "hermes-agent-gateway",
+      "owns": ["remote-session-routing", "receipt", "event-log", "approval"],
+      "mustNotOwn": ["identity-login", "agent-execution"]
+    },
+    {
+      "id": "casdoor-resource-gateway",
+      "owns": ["identity", "resource-authorization"],
+      "mustNotOwn": ["agent-execution", "remote-session-routing"]
+    },
+    {
+      "id": "enterprise-workspace",
+      "owns": ["tenant", "workspace", "membership", "artifact-acl", "task-business-fields"],
+      "status": "later-service"
+    },
+    {
+      "id": "external-hermes",
+      "owns": ["execution", "skills", "mcp", "memory"]
+    }
+  ],
+  "denyEdges": [
+    { "from": "packages/core", "to": "plugins/", "reason": "core must not import business plugins" },
+    { "from": "packages/ui", "to": "packages/runtime/openbuddy-hermes-client", "reason": "UI must not call Hermes" },
+    { "from": "packages/runtime/openbuddy-runtime-adapter", "to": "electron", "reason": "portable contract must not import Electron" },
+    { "from": "packages/runtime/openbuddy-hermes-client", "to": "electron", "reason": "portable client must not import Electron" }
+  ],
+  "forbiddenRoots": ["apps/desktop"],
+  "notYet": ["Ekko SDK", "enterprise plugin sandbox"]
+}

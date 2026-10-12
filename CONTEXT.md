@@ -15,3 +15,11 @@ _Avoid_: vendored transitive dependency
 **Local Pi**:
 The desktop agent runtime already shipped in this repository. A session created on it stays on it.
 _Avoid_: Local Hermes, embedded enterprise server
+
+**Agent Gateway**:
+The service that routes a remote session to Hermes and stores receipts and the event log.
+_Avoid_: resource gateway, Casdoor
+
+**Resource gateway**:
+The existing Casdoor service that authorizes resources. It does not run an agent.
+_Avoid_: Agent Gateway
