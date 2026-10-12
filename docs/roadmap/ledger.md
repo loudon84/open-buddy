@@ -42,7 +42,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P0-02 | P0-01 | done | specs/P0-02-enterprise-boundaries/evidence.md | ADR-0001; spec-only checker; repo import scan waits for P0-06 |
 | P0-03 | P0-01 | done-fixture | specs/P0-03-hermes-matrix/evidence.md | Client observations only; D03 staging not probed |
 | P0-04 | P0-02, P0-03 | done | specs/P0-04-runtime-contract/evidence.md | Project /v1 contract only; not an upstream probe |
-| P0-05 | P0-02, P0-04 | pending |  | Workspace and Plugin contracts |
+| P0-05 | P0-02, P0-04 | done | specs/P0-05-workspace-plugin-contract/evidence.md | D01 roles; sandbox fail-closed; not the Phase 2 service |
 | P0-06 | P0-04, P0-05 | pending |  | Workspace discovery and verification entrypoints |
 | P1-01 | P0-06 | pending |  | LocalPiAdapter |
 | P1-02 | P0-04, P0-06 | pending |  | Hermes compatibility bridge |

@@ -1,0 +1,12 @@
+{
+  "schema": "openbuddy.permission-matrix.v1",
+  "decision": "D01",
+  "roles": ["tenant-admin", "workspace-admin", "member", "viewer"],
+  "unknownRole": {
+    "name": "billing-admin",
+    "status": "unmapped",
+    "decision": "D01",
+    "effect": "deny"
+  },
+  "notes": "Admin does not imply a read of every document. Production role names still need an owner signature."
+}
