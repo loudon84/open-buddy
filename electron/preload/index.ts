@@ -63,6 +63,7 @@ const allowedInvokeChannels = new Set([
   "casdoor:session-register", "casdoor:session-unregister", "casdoor:status", "casdoor:tenant-audit-list", "casdoor:tenant-health", "casdoor:tenant-policy-get", "casdoor:tenant-policy-update", "casdoor:tenant-select",
   "casdoor:unlink-account", "casdoor:user-add", "casdoor:user-delete", "casdoor:user-invite", "casdoor:user-update", "casdoor:wallet-credits", "casdoor:wallet-ledger", "casdoor:wallet-select",
   "casdoor:wallet-selected", "casdoor:wallets-list", "casdoor:webhook-deliver", "casdoor:webhook-subscription-list", "casdoor:webhook-subscription-update", "casdoor:weknora-token-exchange", "casdoor:workbench-summary",
+  "backend-auth:status", "backend-auth:origin-save", "backend-auth:login", "backend-auth:cancel", "backend-auth:refresh", "backend-auth:logout",
   // collaboration
   "collaboration:a2a-agent-card", "collaboration:a2a-task-get", "collaboration:a2a-task-submit", "collaboration:ack-inbox", "collaboration:approval-decide", "collaboration:approval-request", "collaboration:delegation-grant", "collaboration:delegation-revoke",
   "collaboration:execute", "collaboration:federated-grant-issue", "collaboration:federated-grant-revoke", "collaboration:federated-grants", "collaboration:identity-get", "collaboration:identity-update", "collaboration:network-agreement-revoke", "collaboration:network-award",
@@ -176,6 +177,7 @@ const allowedEventChannels = new Set([
   "pi://subagent",
   "pi://extension-ui",
   "casdoor://auth",
+  "backend-auth://status",
   "casdoor://lifecycle",
   "openbuddy://workbench-scope",
   "casdoor://member-revocation",

@@ -44,7 +44,7 @@ import { listenSafe, isElectronBridgeUnavailable, getElectronBridgeStatus } from
 import { friendlyError } from "@/lib/platform/error-format";
 // R48 — 登录编排整体搬进 `overlay.sign-in` 对话框(CasdoorSignInDialog),
 //   宿主只保留状态入口(casdoorStatus / casdoorLogout)与身份视图类型。
-import { casdoorLogout, casdoorStatus, type CasdoorSessionView } from "@/lib/casdoor/casdoor-client";
+import { backendAuthLogout, backendAuthStatus, type BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
 import { auditRecord } from "@/lib/audit/audit-client";
 import type { CasdoorLifecycleEvent } from "@openbuddy/auth-casdoor";
 import { getRendererPluginRuntime } from "@/lib/runtime/renderer-plugin-runtime";
@@ -110,7 +110,7 @@ export function useAppShellRuntime(): AppShellRuntime {
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("model");
   // R9.x — casdoorSession 状态保留,但不再驱动侧栏底部的「企业登录」按钮;
   //   后续「设置 → 账户」页面按需启用时只需 setCasdoorSession(...) 即可。
-  const [casdoorSession, setCasdoorSession] = useState<CasdoorSessionView | null>(null);
+  const [backendSession, setBackendSession] = useState<BackendAuthView | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   // R23 — 「发送反馈」卡是否打开。触发点在左下角账户菜单(ui-sidebar),
@@ -249,11 +249,11 @@ export function useAppShellRuntime(): AppShellRuntime {
 
   // ====== Casdoor ============================================================
   useEffect(() => {
-    void casdoorStatus().then(setCasdoorSession).catch(() => setCasdoorSession(null));
+    void backendAuthStatus().then(setBackendSession).catch(() => setBackendSession(null));
     let disposed = false;
     let unlisten: (() => void) | undefined;
-    void listenSafe<CasdoorSessionView>("casdoor://auth", (event) => {
-      if (!disposed) setCasdoorSession(event.payload);
+    void listenSafe<BackendAuthView>("backend-auth://status", (event) => {
+      if (!disposed) setBackendSession(event.payload);
     }, () => notifyBridgeUnavailable()).then((cleanup) => {
       if (disposed) cleanup?.(); else unlisten = cleanup ?? undefined;
     });
@@ -265,7 +265,9 @@ export function useAppShellRuntime(): AppShellRuntime {
     let unlisten: (() => void) | undefined;
     void listenSafe<CasdoorLifecycleEvent>("casdoor://lifecycle", async (event) => {
       if (disposed) return;
-      if (event.payload.kind === "session-invalidated" || event.payload.kind === "logout" || event.payload.kind === "config-change") setCasdoorSession(null);
+      if (event.payload.kind === "session-invalidated" || event.payload.kind === "logout" || event.payload.kind === "config-change") {
+        // Casdoor lifecycle still resets workspace lists. It does not own the sidebar session.
+      }
       if (event.payload.scopeChanged || !["refresh", "session-invalidated", "config-change"].includes(event.payload.kind)) return;
       sessionStore.getState().reset();
       sessionsStore.setState({ independent: [], workspaces: [], workspaceSessions: {}, currentSessionId: null, drafts: {}, expanded: {} });
@@ -530,7 +532,7 @@ export function useAppShellRuntime(): AppShellRuntime {
   const openAccountSettings = useCallback(() => {
     setSettingsSection("account");
     setSettingsOpen(true);
-    void casdoorStatus().then(setCasdoorSession).catch(() => setCasdoorSession(null));
+    void backendAuthStatus().then(setBackendSession).catch(() => setBackendSession(null));
   }, []);
 
   // R48 — 「登录」入口统一走 Casdoor 登录对话框(overlay.sign-in)。
@@ -561,8 +563,8 @@ export function useAppShellRuntime(): AppShellRuntime {
 
   const handleLogout = useCallback(async () => {
     try {
-      await casdoorLogout();
-      setCasdoorSession(null);
+      await backendAuthLogout();
+      setBackendSession(null);
       setToast("已退出企业账户");
       void auditRecord({
         event: "casdoor.logout",
@@ -881,12 +883,12 @@ export function useAppShellRuntime(): AppShellRuntime {
     setSettingsOpen, setShortcutsOpen, setSearchOpen, setAboutOpen, setTrustRequest, setPlaceholderView,
     setSettingsSection,
     feedbackOpen, setFeedbackOpen,
-    signInOpen, setSignInOpen, openSignIn, setCasdoorSession,
+    signInOpen, setSignInOpen, openSignIn, setBackendSession,
     dataDirOpen, setDataDirOpen,
     sidebarCollapsed, setSidebarCollapsed,
     currentModelId, setCurrentModelId, models, workspaces, switchingWorkspace,
     currentSessionId, currentTitle, streaming,
-    casdoorSession, taskRefreshSignal,
+    backendSession, taskRefreshSignal,
     extensionText, extensionTextNonce, extensionUiBySession,
     notifyBridgeUnavailable,
     openSettings, openAccountSettings, handleLogin, handleLogout, showToast, setToast,

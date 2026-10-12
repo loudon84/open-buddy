@@ -42,8 +42,8 @@ declare module "@openbuddy/ui-slots" {
 
 export { AboutDialog } from "./AboutDialog";
 
-export { CasdoorSignInDialog } from "./CasdoorSignInDialog";
-export type { CasdoorSignInDialogProps } from "./CasdoorSignInDialog";
+export { BackendSignInDialog } from "./BackendSignInDialog";
+export type { BackendSignInDialogProps } from "./BackendSignInDialog";
 
 export { ConfirmDialog } from "./ConfirmDialog";
 export type { ConfirmTone } from "./ConfirmDialog";

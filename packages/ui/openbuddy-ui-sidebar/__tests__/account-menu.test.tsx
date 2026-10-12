@@ -201,13 +201,14 @@ describe("R16 左下角账户菜单", () => {
     expect(onLogin).toHaveBeenCalledTimes(1);
   });
 
-  it("已登录时菜单提供「账户管理」和「退出登录」", () => {
-    const onOpenAccount = vi.fn();
+  it("已登录时菜单提供「退出登录」和「打开设置」", () => {
+    const onOpenSettings = vi.fn();
     const onLogout = vi.fn();
     renderSidebar({
       accountStatus: "signed_in",
       accountLabel: "ada@example.com",
-      onOpenAccount,
+      accountNotice: "请到业务门户完成组织设置。",
+      onOpenSettings,
       onLogout,
     });
     fireEvent.click(document.querySelector(".sidebar__user") as HTMLElement);
@@ -215,7 +216,8 @@ describe("R16 左下角账户菜单", () => {
     const items = Array.from(document.querySelectorAll(".sidebar__account-menu-item")).map(
       (el) => el.textContent?.trim(),
     );
-    expect(items).toEqual(["账户管理", "退出登录"]);
+    expect(items).toEqual(["退出登录", "打开设置"]);
+    expect(document.querySelector(".sidebar__account-menu-sub")?.textContent).toContain("请到业务门户完成组织设置。");
     expect(document.querySelector(".sidebar__account-menu-name")?.textContent?.trim()).toBe(
       "ada@example.com",
     );

@@ -100,9 +100,8 @@ const AboutDialog = lazy(() =>
 const FolderTrustDialog = lazy(() =>
   import("@openbuddy/ui-dialogs").then((m) => ({ default: m.FolderTrustDialog })),
 );
-// R48 — 左下角「登录」入口的落地面板(基于 Casdoor)。
-const CasdoorSignInDialog = lazy(() =>
-  import("@openbuddy/ui-dialogs").then((m) => ({ default: m.CasdoorSignInDialog })),
+const BackendSignInDialog = lazy(() =>
+  import("@openbuddy/ui-dialogs").then((m) => ({ default: m.BackendSignInDialog })),
 );
 const TasksPanel = lazy(() =>
   import("@openbuddy/ui-automation").then((m) => ({ default: m.TasksPanel })),
@@ -244,9 +243,9 @@ function TrustSurface(props: React.ComponentProps<typeof FolderTrustDialog>) {
   return <Component {...props} />;
 }
 
-/** 登录对话框（Casdoor）：内核 `overlay.sign-in` slot 优先。 */
-function SignInSurface(props: React.ComponentProps<typeof CasdoorSignInDialog>) {
-  const Component = useSlotComponent("overlay.sign-in", CasdoorSignInDialog);
+/** 登录对话框：内核 `overlay.sign-in` slot 优先。 */
+function SignInSurface(props: React.ComponentProps<typeof BackendSignInDialog>) {
+  const Component = useSlotComponent("overlay.sign-in", BackendSignInDialog);
   return <Component {...props} />;
 }
 
@@ -467,7 +466,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
     feedbackOpen,
     signInOpen,
     setSignInOpen,
-    setCasdoorSession,
+    setBackendSession,
     openSignIn,
     dataDirOpen,
     setSettingsOpen,
@@ -493,7 +492,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
     handleLogout,
     showToast,
     handlePlaceholder,
-    casdoorSession,
+    backendSession,
     handleSelectEmailFromSearch,
     handleSelectKnowledgeFromSearch,
     refreshModels,
@@ -536,10 +535,11 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
             onNavigate={handleNavigate}
             onOpenSettings={() => openSettings()}
             onOpenSettingsSection={(section: string) => openSettings(section as SettingsSection)}
-            accountLabel={casdoorSession?.status === "signed_in" && casdoorSession.identity
-              ? casdoorSession.identity.displayName ?? casdoorSession.identity.email ?? casdoorSession.identity.subject
+            accountLabel={backendSession?.status === "signed_in" ? backendSession.displayName : undefined}
+            accountStatus={backendSession?.status === "signed_in" ? "signed_in" : backendSession?.status === "error" ? "error" : "signed_out"}
+            accountNotice={backendSession?.status === "signed_in"
+              ? [backendSession.needsOrgSetup ? "请到业务门户完成组织设置。" : "", backendSession.mustChangePassword ? "请到业务门户修改密码。" : ""].filter(Boolean).join("")
               : undefined}
-            accountStatus={casdoorSession?.status}
             onOpenAccount={openAccountSettings}
             onLogin={openSignIn}
             onLogout={handleLogout}
@@ -634,8 +634,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
         <SignInSurface
           open={signInOpen}
           onClose={() => setSignInOpen(false)}
-          onSessionChange={setCasdoorSession}
-          onOpenSettings={() => openSettings("account")}
+          onSessionChange={setBackendSession}
           onToast={showToast}
         />
         {/* R93 — 专家页(智能体域)不展示运行中任务的删除入口:任务调度属于

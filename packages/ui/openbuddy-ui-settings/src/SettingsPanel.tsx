@@ -77,6 +77,7 @@ import {
   GatewayHealthPanel,
   WebhookSubscriptionPanel,
 } from "./SettingsSections";
+import { EnterpriseLoginPanel } from "./EnterpriseLoginPanel";
 import { useRendererContributions, useRendererSlot } from "@/lib/runtime/renderer-plugin-runtime";
 import { useSlotComponents } from "@openbuddy/ui-runtime/client";
 import { OpenBuddyPluginPanel, PluginsPanel } from "@openbuddy/ui-mcp";
@@ -95,6 +96,7 @@ import { RendererContributionCard, RendererSlotView } from "@openbuddy/ui-workbe
  */
 
 type SectionId =
+  | "enterprise-login"
   | "account"
   | "members"
   | "linking"
@@ -211,6 +213,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: User,
     collapsedByDefault: true,
     items: [
+      { id: "enterprise-login", label: "企业登录", icon: User },
       { id: "account", label: "账户管理", icon: User },
       { id: "members", label: "租户成员", icon: Users },
       { id: "linking", label: "账号绑定", icon: Link2 },
@@ -602,6 +605,8 @@ const OpenBuddyPluginPanelImpl = (_openbuddyPluginImpl ?? OpenBuddyPluginPanel) 
               <AuditSettingsPanel />
             ) : active === "general" ? (
               <GeneralSettingsPanel />
+            ) : active === "enterprise-login" ? (
+              <EnterpriseLoginPanel />
             ) : active === "account" ? (
               <AccountSettingsPanel />
             ) : active === "members" ? (

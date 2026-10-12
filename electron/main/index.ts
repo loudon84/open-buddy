@@ -40,6 +40,7 @@ import { createBridgeStatusBroadcaster, notifyBridgeUnavailable } from "./collab
 import { bootHarnessServer } from "./bootstrap/boot-harness-server";
 import { installAppLifecycle } from "./bootstrap/app-lifecycle";
 import { casdoorAuth } from "./casdoor/casdoor-auth";
+import { backendAuth } from "./backend-auth/backend-auth-service";
 import { initCasdoorSecurity, type CasdoorSecurityController } from "./security/casdoor";
 import { perfTraceMark } from "./observability/perf-trace";
 import { createMainWindow as buildMainWindow } from "./main-window";
@@ -278,6 +279,11 @@ async function bootBackgroundServices(): Promise<void> {
     await casdoorAuth.init();
   } catch (error) {
     console.error("[openbuddy-pi] casdoor init failed:", error);
+  }
+  try {
+    await backendAuth.init();
+  } catch (error) {
+    console.error("[openbuddy-pi] backend auth init failed:", error);
   }
   perfTraceMark("casdoor-init-end");
   casdoorController!.setLastScope(casdoorController!.casdoorScope());

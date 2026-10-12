@@ -16,8 +16,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { InitResult, WorkspaceInfo } from "@/lib/agent/pi-client";
 import type { ModelOption } from "@openbuddy/ui-workbench";
-import type { CasdoorSessionView } from "@/lib/casdoor/casdoor-client";
-import type { CasdoorLifecycleEvent } from "@openbuddy/auth-casdoor";
+import type { BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
 import type { UserContentPart } from "@/stores/session-store";
 import type { ProjectMeta } from "@/stores/projects-store";
 import type { AgentEntry } from "@openbuddy/shared-types";
@@ -26,6 +25,7 @@ import type { AgentEntry } from "@openbuddy/shared-types";
 export type SettingsSection =
   | "model"
   | "account"
+  | "enterprise-login"
   | "shortcuts"
   | "personalize"
   | "assistant"
@@ -133,7 +133,7 @@ export interface AppShellRuntime {
   setSignInOpen: Dispatch<SetStateAction<boolean>>;
   openSignIn(): void;
   /** R48 — 登录对话框回写身份(侧栏账户区据此显示已登录态)。 */
-  setCasdoorSession: Dispatch<SetStateAction<CasdoorSessionView | null>>;
+  setBackendSession: Dispatch<SetStateAction<BackendAuthView | null>>;
   setTrustRequest: Dispatch<SetStateAction<{ cwd?: string; reason?: string } | null>>;
   setPlaceholderView: Dispatch<SetStateAction<string | null>>;
 
@@ -154,7 +154,7 @@ export interface AppShellRuntime {
   streaming: boolean;
 
   // ---- Casdoor ------------------------------------------------------------
-  casdoorSession: CasdoorSessionView | null;
+  backendSession: BackendAuthView | null;
 
   // ---- 任务面板刷新信号 ---------------------------------------------------
   taskRefreshSignal: number;

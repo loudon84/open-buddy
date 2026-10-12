@@ -150,6 +150,7 @@ import {
 	type RecordValue,
 } from "./validation";
 import { registerCasdoorIpc } from "./casdoor";
+import { registerBackendAuthIpc } from "./backend-auth";
 import { registerStorageIpc } from "./storage";
 import { registerEmailIpc } from "./email";
 import { registerCollaborationIpc } from "./collaboration";
@@ -1114,6 +1115,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null): Promis
 
 	// Domain registrators — see ./casdoor.ts, ./storage.ts, ./email.ts, ./collaboration.ts, ./harness.ts, ./agent.ts, ./connectors.ts, ./misc.ts
 	registerCasdoorIpc(getWindow);
+	registerBackendAuthIpc(getWindow);
 	registerStorageIpc(getWindow);
 	registerEmailIpc(getWindow);
 	registerCollaborationIpc(getWindow);

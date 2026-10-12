@@ -836,6 +836,7 @@ export function Sidebar({
   onOpenSettingsSection,
   accountLabel,
   accountStatus,
+  accountNotice,
   onOpenAccount,
   onLogin,
   onLogout,
@@ -863,6 +864,8 @@ export function Sidebar({
   accountLabel?: string;
   /** 会话状态：signed_out / signed_in / configuration_needed。不传则视为 signed_out。 */
   accountStatus?: "signed_out" | "signed_in" | "configuration_needed" | "error";
+  /** Portal notice shown under the signed-in account name. */
+  accountNotice?: string;
   /** 历史功能:打开「设置 → 账户管理」+ 刷新状态 + 未登录时自动拉起登录页。 */
   onOpenAccount?: () => void;
   /** 触发 casdoor 企业登录(默认 provider)。 */
@@ -1915,16 +1918,8 @@ export function Sidebar({
                 <>
                   <div className="sidebar__account-menu-head" role="presentation">
                     <div className="sidebar__account-menu-name">{accountLabel ?? "已登录"}</div>
-                    <div className="sidebar__account-menu-sub">企业账户已连接</div>
+                    <div className="sidebar__account-menu-sub">{accountNotice || "企业账户已连接"}</div>
                   </div>
-                  <button
-                    type="button"
-                    className="sidebar__account-menu-item"
-                    role="menuitem"
-                    onClick={() => { setAccountMenuOpen(false); (onOpenAccount ?? onOpenSettings)(); }}
-                  >
-                    账户管理
-                  </button>
                   {onLogout && (
                     <button
                       type="button"
@@ -1935,8 +1930,14 @@ export function Sidebar({
                       退出登录
                     </button>
                   )}
-                  {/* R23 — 反馈入口放在"用户"这一侧:用户想吐槽的时候,第一反应
-                      就是点左下角自己那块。落本地审计日志,不上传。 */}
+                  <button
+                    type="button"
+                    className="sidebar__account-menu-item"
+                    role="menuitem"
+                    onClick={() => { setAccountMenuOpen(false); onOpenSettings(); }}
+                  >
+                    打开设置
+                  </button>
                   {onOpenFeedback && (
                     <button
                       type="button"
