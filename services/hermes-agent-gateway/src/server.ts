@@ -80,6 +80,7 @@ export async function startGateway(options: {
           method: "POST",
           body: { agentInstanceId: instance.agentInstanceId },
         });
+        if (upstream.status >= 500) throw new Error(`upstream status ${upstream.status}`);
         const sessionId = String(upstream.body.sessionId);
         store.saveSession({
           sessionId,
@@ -126,6 +127,7 @@ export async function startGateway(options: {
               method: "POST",
               body: { text: body.text },
             });
+            if (upstream.status >= 500) throw new Error(`upstream status ${upstream.status}`);
             return { sessionId: session.sessionId, runId: String(upstream.body.runId), traceId: "trace-send" };
           });
           send(202, receipt);

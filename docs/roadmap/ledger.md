@@ -50,7 +50,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Replay, one terminal, approval rejection, reconciliation |
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
 | P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Phase slot; not mounted in legacy App.tsx |
-| P1-07 | P1-06 | pending |  | Real Hermes chain or fixture-only |
+| P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
 | P1-08 | P1-07 | pending |  | Runtime runbook and flag rollback |
 | P2-01 | P1-08 | pending |  | Workspace relation model |
 | P2-02 | P2-01 | pending |  | OIDC membership authorization |
