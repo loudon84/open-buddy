@@ -11,7 +11,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | Phase | Tasks | Exit | Status |
 | --- | --- | --- | --- |
 | 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
-| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | open |
+| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; fixture drill recorded; D11 unmeasured |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | open |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | open |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | open |
@@ -51,7 +51,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
 | P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Phase slot; not mounted in legacy App.tsx |
 | P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
-| P1-08 | P1-07 | pending |  | Runtime runbook and flag rollback |
+| P1-08 | P1-07 | done-fixture | specs/P1-08-runtime-operations/evidence.md | Flag rollback drill; no deploy; D11 unmeasured |
 | P2-01 | P1-08 | pending |  | Workspace relation model |
 | P2-02 | P2-01 | pending |  | OIDC membership authorization |
 | P2-03 | P2-02 | pending |  | Membership and Agent directory API |
