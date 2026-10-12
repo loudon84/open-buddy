@@ -49,7 +49,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Major check, single-flight 401, 403, Retry-After; token not logged |
 | P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Replay, one terminal, approval rejection, reconciliation |
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
-| P1-06 | P1-05 | pending |  | Shell remote session and approval UI |
+| P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Phase slot; not mounted in legacy App.tsx |
 | P1-07 | P1-06 | pending |  | Real Hermes chain or fixture-only |
 | P1-08 | P1-07 | pending |  | Runtime runbook and flag rollback |
 | P2-01 | P1-08 | pending |  | Workspace relation model |
