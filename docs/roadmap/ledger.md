@@ -62,7 +62,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P3-01 | P2-07, P0-05 | done | specs/P3-01-enterprise-manifest/evidence.md | Legacy alias does not widen grants |
 | P3-02 | P3-01, P2-02 | done | specs/P3-02-plugin-broker/evidence.md | Grant rechecked at call time; no direct Hermes URL |
 | P3-03 | P3-02 | done | specs/P3-03-isolated-ui/evidence.md | Sandboxed frame; scope change clears menus |
-| P3-04 | P3-02 | pending |  | Remote container backend |
+| P3-04 | P3-02 | done-fixture | specs/P3-04-container-gate/evidence.md | Policy gate only; no container daemon |
 | P3-05 | P3-01, P2-02 | pending |  | Private registry and signatures |
 | P3-06 | P3-03, P3-04, P3-05 | pending |  | Install, upgrade, rollback |
 | P3-07 | P3-06 | pending |  | Third-party fixture acceptance |
