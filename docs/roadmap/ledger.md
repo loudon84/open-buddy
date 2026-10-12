@@ -63,7 +63,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P3-02 | P3-01, P2-02 | done | specs/P3-02-plugin-broker/evidence.md | Grant rechecked at call time; no direct Hermes URL |
 | P3-03 | P3-02 | done | specs/P3-03-isolated-ui/evidence.md | Sandboxed frame; scope change clears menus |
 | P3-04 | P3-02 | done-fixture | specs/P3-04-container-gate/evidence.md | Policy gate only; no container daemon |
-| P3-05 | P3-01, P2-02 | pending |  | Private registry and signatures |
+| P3-05 | P3-01, P2-02 | done | specs/P3-05-plugin-registry/evidence.md | Private catalog; new permission clears approval; D09 unsigned |
 | P3-06 | P3-03, P3-04, P3-05 | pending |  | Install, upgrade, rollback |
 | P3-07 | P3-06 | pending |  | Third-party fixture acceptance |
 | P4A-01 | P3-07, P0-01 | pending |  | Knowledge migration map |
