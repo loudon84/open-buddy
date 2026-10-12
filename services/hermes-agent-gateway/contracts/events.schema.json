@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openbuddy.invalid/schemas/runtime-event-1.0.json",
+  "type": "object",
+  "required": ["type", "seq", "schemaVersion"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "type": {
+      "enum": [
+        "run.accepted",
+        "message.delta",
+        "tool.started",
+        "tool.result",
+        "approval.required",
+        "approval.resolved",
+        "artifact.created",
+        "run.completed",
+        "run.failed",
+        "run.cancelled",
+        "session.updated"
+      ]
+    },
+    "seq": { "type": "integer", "minimum": 0 }
+  },
+  "oneOf": [
+    { "properties": { "type": { "const": "run.accepted" }, "payload": { "required": ["requestId"] } } },
+    { "properties": { "type": { "const": "message.delta" }, "payload": { "required": ["messageId", "delta"] } } },
+    { "properties": { "type": { "const": "tool.started" }, "payload": { "required": ["invocationId", "toolName", "inputSummary"] } } },
+    { "properties": { "type": { "const": "tool.result" }, "payload": { "required": ["invocationId"] } } },
+    { "properties": { "type": { "const": "approval.required" }, "payload": { "required": ["approvalId", "actionDigest", "summary", "expiresAt"] } } },
+    { "properties": { "type": { "const": "approval.resolved" }, "payload": { "required": ["approvalId", "decision"] } } },
+    { "properties": { "type": { "const": "artifact.created" }, "payload": { "required": ["artifactId", "mimeType"] } } },
+    { "properties": { "type": { "const": "run.completed" } } },
+    { "properties": { "type": { "const": "run.failed" }, "payload": { "required": ["error"] } } },
+    { "properties": { "type": { "const": "run.cancelled" }, "payload": { "required": ["reason"] } } },
+    { "properties": { "type": { "const": "session.updated" }, "payload": { "required": ["revision", "status"] } } }
+  ]
+}

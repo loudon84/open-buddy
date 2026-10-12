@@ -1,0 +1,143 @@
+openapi: 3.0.3
+info:
+  title: Hermes agent gateway contract
+  version: 1.0.0
+  description: >
+    Project contract. Not an observed upstream Hermes API.
+    Client paths recorded in the P0-03 matrix are not these routes.
+    A session that belongs to another tenant is hidden as 404 NOT_FOUND.
+servers:
+  - url: https://gateway.example.invalid
+paths:
+  /v1/capabilities:
+    get:
+      operationId: connect
+      responses:
+        "200":
+          description: Capabilities, protocolVersion 1.0
+  /v1/sessions:
+    post:
+      operationId: createSession
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          description: Session
+  /v1/sessions/{sessionId}:
+    get:
+      operationId: getSession
+      responses:
+        "200":
+          description: Session
+        "404":
+          description: Missing session, including a cross-tenant id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                error:
+                  code: NOT_FOUND
+                  message: Not found
+                  retryable: false
+                  traceId: trace-cross-tenant
+  /v1/sessions/{sessionId}/messages:
+    post:
+      operationId: sendMessage
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: RunReceipt
+  /v1/sessions/{sessionId}/events:
+    get:
+      operationId: stream
+      responses:
+        "200":
+          description: text/event-stream of RuntimeEvent
+  /v1/sessions/{sessionId}/runs/{runId}/cancel:
+    post:
+      operationId: cancel
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Cancel accepted; wait for one terminal event
+  /v1/sessions/{sessionId}/approvals/{approvalId}/decision:
+    post:
+      operationId: resolveApproval
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Approval accepted
+        "409":
+          description: Expired, already decided, or idempotency key reused with a different body
+  /v1/tasks:
+    post:
+      operationId: executeTask
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Task
+  /v1/sessions/{sessionId}/tools:
+    get:
+      operationId: listTools
+      responses:
+        "200":
+          description: Tool descriptors
+  /v1/sessions/{sessionId}/tools/{toolName}/invocations:
+    post:
+      operationId: executeTool
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "202":
+          description: Authorized tool invocation
+  /v1/agent-instances/{agentInstanceId}/status:
+    get:
+      operationId: queryStatus
+      responses:
+        "200":
+          description: Instance status
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, retryable, traceId]
+          properties:
+            code:
+              type: string
+              enum:
+                - UNAUTHENTICATED
+                - FORBIDDEN
+                - NOT_FOUND
+                - CONFLICT
+                - INVALID_ARGUMENT
+                - UNSUPPORTED_CAPABILITY
+                - RATE_LIMITED
+                - UPSTREAM_UNAVAILABLE
+                - RESUME_EXPIRED
+                - TIMEOUT
+                - CANCELLED
+            message:
+              type: string
+            retryable:
+              type: boolean
+            traceId:
+              type: string
+    SchemaVersion:
+      type: string
+      const: "1.0"

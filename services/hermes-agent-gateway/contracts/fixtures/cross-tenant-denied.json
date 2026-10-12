@@ -1,0 +1,16 @@
+{
+  "name": "cross-tenant session read",
+  "callerTenantId": "tenant-a",
+  "sessionTenantId": "tenant-b",
+  "response": {
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Not found",
+        "retryable": false,
+        "traceId": "trace-cross-tenant"
+      }
+    }
+  }
+}

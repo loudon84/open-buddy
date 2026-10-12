@@ -1,0 +1,14 @@
+[
+  { "method": "connect", "http": "get", "path": "/v1/capabilities" },
+  { "method": "disconnect", "http": null, "path": null, "note": "Closes the local transport. It does not cancel a remote run." },
+  { "method": "createSession", "http": "post", "path": "/v1/sessions" },
+  { "method": "getSession", "http": "get", "path": "/v1/sessions/{sessionId}" },
+  { "method": "sendMessage", "http": "post", "path": "/v1/sessions/{sessionId}/messages" },
+  { "method": "stream", "http": "get", "path": "/v1/sessions/{sessionId}/events" },
+  { "method": "cancel", "http": "post", "path": "/v1/sessions/{sessionId}/runs/{runId}/cancel" },
+  { "method": "resolveApproval", "http": "post", "path": "/v1/sessions/{sessionId}/approvals/{approvalId}/decision" },
+  { "method": "executeTask", "http": "post", "path": "/v1/tasks" },
+  { "method": "listTools", "http": "get", "path": "/v1/sessions/{sessionId}/tools" },
+  { "method": "executeTool", "http": "post", "path": "/v1/sessions/{sessionId}/tools/{toolName}/invocations" },
+  { "method": "queryStatus", "http": "get", "path": "/v1/agent-instances/{agentInstanceId}/status" }
+]
