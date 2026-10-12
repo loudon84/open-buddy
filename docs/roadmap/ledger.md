@@ -88,7 +88,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4D-02 | P4D-01 | done | specs/P4D-02-metric-cache/evidence.md | Tenant totals and a hard query limit |
 | P4D-03 | P4D-02 | done | specs/P4D-03-metric-explain/evidence.md | Explain names the metric; export needs a grant |
 | P4D-04 | P4D-03 | done-fixture | specs/P4D-04-bi-acceptance/evidence.md | Fixture totals; staging exits 2; phase stays open |
-| P4E-01 | P4D-04 | pending |  | Object catalog and schema versions |
+| P4E-01 | P4D-04 | done-fixture | specs/P4E-01-object-catalog/evidence.md | Older schema rejected; D08 unset |
 | P4E-02 | P4E-01 | pending |  | Authorized relation query |
 | P4E-03 | P4E-02, P4C-04 | pending |  | Quote prepare/commit |
 | P4E-04 | P4E-03 | pending |  | Ontology acceptance |
