@@ -161,6 +161,7 @@ import { registerMiscIpc } from "./misc";
 import { registerAuditIpc } from "./audit";
 import { registerDataDirIpc } from "./data-dir";
 import { registerAgentPathsIpc } from "./agent-paths";
+import { registerEnterpriseRuntimeIpc } from "./enterprise-runtime";
 // R18 / Phase D — Expert Marketplace Bridge (Pi 扩展市场)
 import {
   createPiMarketBridge,
@@ -1132,6 +1133,9 @@ export async function registerIpc(getWindow: () => BrowserWindow | null): Promis
 	// 消费 `agent:paths`;所有「文件放在哪儿」的文案都从这里取,不再各自
 	// 硬编码 `~/.pi/...`(OpenBuddy 的 agent 根是 `~/.openbuddy/agent`)。
 	registerAgentPathsIpc();
+
+	// Enterprise remote runtime (P1-06): off unless OPENBUDDY_ENTERPRISE_GATEWAY_URL is set.
+	registerEnterpriseRuntimeIpc(getWindow);
 
 	// Phase A.1 — pi-bridge IPC surface (pi text / image / skill helpers).
 	registerPiBridgeIpc();

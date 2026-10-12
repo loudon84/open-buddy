@@ -4,10 +4,12 @@ import type { RuntimePhase } from "../../../runtime/openbuddy-runtime-adapter/sr
 export type { RuntimePhase };
 
 const labels: Record<RuntimePhase, string> = {
+  idle: "就绪",
   accepted: "已接受",
   running: "运行中",
   waiting: "等待审批",
   completed: "已完成",
+  failed: "运行失败",
   "cancel-pending": "正在取消",
   cancelled: "已取消",
   disconnected: "连接已断开",
@@ -15,7 +17,7 @@ const labels: Record<RuntimePhase, string> = {
 
 export function reduceRuntime(phase: RuntimePhase, event: { type: "status" | "cancel-requested" | "terminal" | "disconnected"; status?: RuntimePhase }): RuntimePhase {
   if (event.type === "disconnected") return "disconnected";
-  if (event.type === "cancel-requested" && phase !== "completed" && phase !== "cancelled" && phase !== "disconnected") return "cancel-pending";
+  if (event.type === "cancel-requested" && !["idle", "completed", "failed", "cancelled", "disconnected"].includes(phase)) return "cancel-pending";
   if (event.type === "terminal" && phase === "cancel-pending" && event.status) return event.status;
   if (event.type === "status" && event.status) return event.status;
   return phase;

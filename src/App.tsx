@@ -23,6 +23,7 @@
 import { SlotProvider } from "@openbuddy/ui-runtime/client";
 import { ThemeInitializer } from "@openbuddy/ui-theme/client";
 import { ComposerPortal } from "@/components/ComposerPortal";
+import { EnterpriseRuntimeDock } from "@/features/enterprise-runtime/EnterpriseRuntimeDock";
 import { AppShell } from "@/features/app/AppShell";
 import { useSlotComponent } from "@/features/app/slot-bridge";
 import { useAppShellRuntime } from "@/features/app/useAppShellRuntime";
@@ -55,6 +56,8 @@ export default function App() {
       {/* 第 4-5 周(P1-A):全局 ComposerPortal 监听 composer-store,
           让任意面板都能从顶层打开预填好的 EmailComposer。 */}
       <ComposerPortal />
+      {/* P1-06:企业远端运行时;未配置 OPENBUDDY_ENTERPRISE_GATEWAY_URL 时不渲染。 */}
+      <EnterpriseRuntimeDock />
     </SlotProvider>
   );
 }

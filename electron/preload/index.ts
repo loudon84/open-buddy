@@ -123,6 +123,9 @@ const allowedInvokeChannels = new Set([
   "email:sender-policy", "email:share-thread", "email:sync", "email:sync-states", "email:thread", "email:threads", "email:threads-page", "email:triage",
   "email:unsubscribe", "email:update", "email:update-workspace-tags", "email:workspace-tags",
   "email:invalidate-provider",
+  // enterprise remote runtime (P1-06)
+  "enterprise-runtime:status", "enterprise-runtime:connect", "enterprise-runtime:create-session", "enterprise-runtime:send",
+  "enterprise-runtime:cancel", "enterprise-runtime:decide", "enterprise-runtime:subscribe", "enterprise-runtime:unsubscribe",
   // workbuddy
   "workbuddy_import_confirm", "workbuddy_import_preview", "workbuddy_import_rollback", "workbuddy_import_status",
   // other
@@ -150,6 +153,7 @@ const allowedEventChannels = new Set([
   "openbuddy://plugin-event",
   "openbuddy://collaboration-update",
   "openbuddy://pi-stream-port",
+  "openbuddy://enterprise-runtime",
   "dsh://rpc",
   "pi://event",
   "pi://update",

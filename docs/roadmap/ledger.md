@@ -11,7 +11,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | Phase | Tasks | Exit | Status |
 | --- | --- | --- | --- |
 | 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
-| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; loopback main chain recorded; desktop wiring open (P1-06); D11 unmeasured |
+| 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; loopback main chain and desktop dock recorded; D11 unmeasured |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
 | 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | fixture chain recorded; D04 unprobed |
@@ -51,7 +51,7 @@ The 2026-10-12 branch review and its remediation are in [review-2026-10-12.md](r
 | P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Full RemoteHermesAdapter; loopback main chain test; token not logged |
 | P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Receipts scoped by tenant, workspace, operation, resource; one terminal |
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
-| P1-06 | P1-05 | in-progress | specs/P1-06-runtime-panel/evidence.md | Reopened by review 2026-10-12: panel not mounted in App.tsx; no IPC or preload channel |
+| P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Dock mounted behind gateway URL; main-owned controller and IPC; not run in a packaged window |
 | P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
 | P1-08 | P1-07 | done-fixture | specs/P1-08-runtime-operations/evidence.md | Flag rollback drill; no deploy; D11 unmeasured |
 | P2-01 | P1-08 | done | specs/P2-01-workspace-model/evidence.md | Membership rows; Pi history not migrated |

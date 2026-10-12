@@ -171,10 +171,17 @@ export interface RuntimeAdapter {
 }
 
 export type RuntimePhase =
+  | "idle"
   | "accepted"
   | "running"
   | "waiting"
   | "completed"
+  | "failed"
   | "cancel-pending"
   | "cancelled"
   | "disconnected";
+
+/** What the desktop main process pushes to the renderer for one enterprise session. */
+export type RuntimeEmission =
+  | { kind: "event"; sessionId: string; event: RuntimeEvent }
+  | { kind: "stream-error"; sessionId: string; code: string; message: string; retryable: boolean };

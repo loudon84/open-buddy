@@ -217,6 +217,10 @@ const coverageClasses = {
     "email:share-thread", "email:create-reminder", "email:move-to-project", "email:attachments", "email:attachment-download", "email:create-reminders-from-analysis",
     "email:create-draft", "email:prepare-send", "email:queue-send", "email:send-draft", "email:audit", "email:analyses", "email:save-analysis", "email:review-analysis", "email:link-analysis", "email:create-reminders-from-analysis",
     "email:invalidate-provider",
+    // Enterprise remote runtime: needs a configured gateway and a signed-in tenant.
+    // Covered by tests/enterprise/enterprise-runtime-controller.test.ts against a loopback gateway.
+    "enterprise-runtime:status", "enterprise-runtime:connect", "enterprise-runtime:create-session", "enterprise-runtime:send",
+    "enterprise-runtime:cancel", "enterprise-runtime:decide", "enterprise-runtime:subscribe", "enterprise-runtime:unsubscribe",
     "agent:transaction-list",
     "agent:transaction-receipt",
     "casdoor:ai-capabilities",
