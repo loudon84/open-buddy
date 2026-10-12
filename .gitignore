@@ -32,6 +32,8 @@ test-grok-connection.mjs
 
 # Documentation (allowlist specific files below)
 docs/*
+!docs/agents/
+!docs/agents/**
 !docs/storage-verification-report.md
 !docs/distributed-buddy-network-architecture.md
 !docs/migration-pi-electron.md
