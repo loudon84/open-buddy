@@ -13,7 +13,7 @@ Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See 
 | 0 | P0-01–P0-06 | Baseline, contracts, CI wiring, runnable fixtures | exited with recorded limits: vitest 159 failed / 7360 passed; tenant probe has no tokens; D03 unprobed |
 | 1 | P1-01–P1-08 | Local Pi regression plus real remote Hermes, or external block D03 | waiting on D03; fixture drill recorded; D11 unmeasured |
 | 2 | P2-01–P2-07 | Nine isolation paths; production still waits on D01/D02 | fixture matrix recorded; production waits on D01/D02 |
-| 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | open |
+| 3 | P3-01–P3-07 | Signed private registry, isolated third-party fixture, old Pi extensions | fixture chain recorded; D09 unsigned; no container daemon |
 | 4A | P4A-01–P4A-07 | Knowledge and six-format preview; real exit waits on D04 | open |
 | 4B | P4B-01–P4B-06 | Browser policy and controlled actions; real sites wait on D05 | open |
 | 4C | P4C-01–P4C-05 | Customer draft and approved commit; real CRM waits on D06 | open |
@@ -65,7 +65,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P3-04 | P3-02 | done-fixture | specs/P3-04-container-gate/evidence.md | Policy gate only; no container daemon |
 | P3-05 | P3-01, P2-02 | done | specs/P3-05-plugin-registry/evidence.md | Private catalog; new permission clears approval; D09 unsigned |
 | P3-06 | P3-03, P3-04, P3-05 | done | specs/P3-06-plugin-lifecycle/evidence.md | Failed upgrade keeps the old version |
-| P3-07 | P3-06 | pending |  | Third-party fixture acceptance |
+| P3-07 | P3-06 | done-fixture | specs/P3-07-plugin-fixtures/evidence.md | Fixture chain; staging exits 2; no container daemon |
 | P4A-01 | P3-07, P0-01 | pending |  | Knowledge migration map |
 | P4A-02 | P4A-01 | pending |  | Knowledge plugin provider |
 | P4A-03 | P4A-02 | pending |  | Ingestion, version, delete |
