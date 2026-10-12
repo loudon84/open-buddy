@@ -73,7 +73,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4A-05 | P4A-04 | done | specs/P4A-05-preview-safety/evidence.md | Six formats; script, MIME, SSRF, and path checks |
 | P4A-06 | P4A-03, P4A-05 | done-fixture | specs/P4A-06-knowledge-tools/evidence.md | Citations from the authorized version; D04 unprobed |
 | P4A-07 | P4A-06 | done-fixture | specs/P4A-07-knowledge-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
-| P4B-01 | P4A-07 | pending |  | Browser runtime and profiles |
+| P4B-01 | P4A-07 | done-fixture | specs/P4B-01-browser-runtime/evidence.md | Isolated profile; CDP port unset |
 | P4B-02 | P4B-01 | pending |  | Domain policy |
 | P4B-03 | P4B-02, P4A-04 | pending |  | DOM read and snapshot |
 | P4B-04 | P4B-03, P3-02 | pending |  | click/fill approval |
