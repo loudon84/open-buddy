@@ -85,7 +85,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4C-04 | P4C-03 | done-fixture | specs/P4C-04-crm-outbox/evidence.md | Approval, replay, and reconciliation; D06 unprobed |
 | P4C-05 | P4C-04 | done-fixture | specs/P4C-05-crm-acceptance/evidence.md | Fixture chain; staging exits 2; phase stays open |
 | P4D-01 | P4C-05 | done-fixture | specs/P4D-01-metric-contract/evidence.md | Unsigned fixture expression; D07 unprobed |
-| P4D-02 | P4D-01 | pending |  | Policy query and cache |
+| P4D-02 | P4D-01 | done | specs/P4D-02-metric-cache/evidence.md | Tenant totals and a hard query limit |
 | P4D-03 | P4D-02 | pending |  | Charts, explain, export |
 | P4D-04 | P4D-03 | pending |  | BI acceptance |
 | P4E-01 | P4D-04 | pending |  | Object catalog and schema versions |
