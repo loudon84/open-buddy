@@ -71,7 +71,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P4A-03 | P4A-02 | done-fixture | specs/P4A-03-ingestion/evidence.md | Idempotent upload and three-store delete; D04 unsigned |
 | P4A-04 | P4A-03 | done | specs/P4A-04-preview-contract/evidence.md | Three providers; remote local paths refused |
 | P4A-05 | P4A-04 | done | specs/P4A-05-preview-safety/evidence.md | Six formats; script, MIME, SSRF, and path checks |
-| P4A-06 | P4A-03, P4A-05 | pending |  | Knowledge tools and citations |
+| P4A-06 | P4A-03, P4A-05 | done-fixture | specs/P4A-06-knowledge-tools/evidence.md | Citations from the authorized version; D04 unprobed |
 | P4A-07 | P4A-06 | pending |  | Knowledge acceptance |
 | P4B-01 | P4A-07 | pending |  | Browser runtime and profiles |
 | P4B-02 | P4B-01 | pending |  | Domain policy |
