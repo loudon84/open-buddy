@@ -46,7 +46,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 | P0-06 | P0-04, P0-05 | done | docs/architecture/validation-baseline.md | Packages discovered. typecheck/lint/build 0. vitest exit 1 kept. Tenant script exit 2 without tokens |
 | P1-01 | P0-06 | done | specs/P1-01-local-pi-adapter/evidence.md | Local scope only; fixture adapter cannot be the default |
 | P1-02 | P0-04, P0-06 | done-fixture | specs/P1-02-hermes-bridge/evidence.md | Real HTTP gateway; loopback upstream only; D03 unprobed |
-| P1-03 | P1-02 | pending |  | Secure transport and RemoteHermesAdapter |
+| P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Major check, single-flight 401, 403, Retry-After; token not logged |
 | P1-04 | P1-02 | pending |  | Event log, idempotency, cancel, approval |
 | P1-05 | P1-01, P1-03, P1-04 | pending |  | Session projection and resume |
 | P1-06 | P1-05 | pending |  | Shell remote session and approval UI |
