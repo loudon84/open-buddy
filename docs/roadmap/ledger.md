@@ -38,7 +38,7 @@ Production gates stay closed. `done-fixture` does not flip a phase exit to passe
 
 | Task | Depends on | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- |
-| P0-01 | — | pending |  | Freeze source/target HEAD, hashes, licenses |
+| P0-01 | — | done | specs/P0-01-baseline-inventory/evidence.md | 73-file apps/work closure; React ranges unchanged; vitest not installed |
 | P0-02 | P0-01 | pending |  | Service authority and directory boundaries |
 | P0-03 | P0-01 | pending |  | Hermes capability matrix |
 | P0-04 | P0-02, P0-03 | pending |  | Runtime and Gateway contracts |

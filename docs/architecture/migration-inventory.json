@@ -1,0 +1,688 @@
+{
+  "frozenAt": "2026-10-12T04:20:19.015Z",
+  "target": {
+    "head": "0831ca6bb1ced2b3053c26486e736c3e5b5437a4",
+    "scanSnapshot": "2dd37e9eaa8c35496846883c0c47b60153f9ddfb",
+    "dirty": [
+      "?? .cursor/plans/"
+    ],
+    "packageManager": "pnpm",
+    "buildGraph": "moon"
+  },
+  "source": {
+    "root": "E:/git/smc-copilot",
+    "head": "68de354235f2796da8c89b869a9db70955fae20e",
+    "scanSnapshot": "68de354235f2796da8c89b869a9db70955fae20e",
+    "scope": "apps/work",
+    "dirty": [],
+    "license": "MIT",
+    "licenseFile": "apps/work/LICENSE"
+  },
+  "toolchain": [
+    {
+      "id": "react",
+      "source": "^19.2.1",
+      "target": "^18.3.1",
+      "disposition": "judge-by-target-typecheck"
+    },
+    {
+      "id": "react-dom",
+      "source": "^19.2.1",
+      "target": "^18.3.1",
+      "disposition": "judge-by-target-typecheck"
+    },
+    {
+      "id": "@types/react",
+      "source": "not copied",
+      "target": "^18.3.12",
+      "disposition": "judge-by-target-typecheck"
+    },
+    {
+      "id": "@types/react-dom",
+      "source": "not copied",
+      "target": "^19.2.7",
+      "disposition": "judge-by-target-typecheck"
+    },
+    {
+      "id": "package-manager",
+      "source": "npm (apps/work/project.json npm ci; repository package-lock.json)",
+      "target": "pnpm (pnpm-workspace.yaml, packageManager pnpm@11.24.0)",
+      "disposition": "keep-target-pnpm"
+    },
+    {
+      "id": "build-graph",
+      "source": "nx (apps/work/project.json)",
+      "target": "moon (moon.yml)",
+      "disposition": "keep-target-moon"
+    }
+  ],
+  "outOfRange": [
+    {
+      "name": "runtime-client-ts",
+      "evidence": [
+        "apps/work/project.json implicitDependencies",
+        "apps/work/tsconfig.node.json alias @smc/runtime-client"
+      ],
+      "action": "do-not-copy",
+      "decision": "D12"
+    },
+    {
+      "name": "@open-file-viewer/core",
+      "evidence": [
+        "apps/work/components/file-preview/adapters/open-file-viewer.tsx"
+      ],
+      "action": "do-not-copy",
+      "decision": "D12",
+      "note": "Third-party or out-of-tree specifier seen in the named closure. Not a complete import closure."
+    },
+    {
+      "name": "@open-file-viewer/core/style.css",
+      "evidence": [
+        "apps/work/components/file-preview/adapters/open-file-viewer.tsx"
+      ],
+      "action": "do-not-copy",
+      "decision": "D12",
+      "note": "Third-party or out-of-tree specifier seen in the named closure. Not a complete import closure."
+    },
+    {
+      "name": "@open-file-viewer/react",
+      "evidence": [
+        "apps/work/components/file-preview/adapters/open-file-viewer.tsx"
+      ],
+      "action": "do-not-copy",
+      "decision": "D12",
+      "note": "Third-party or out-of-tree specifier seen in the named closure. Not a complete import closure."
+    }
+  ],
+  "closureNote": "Named migration closure only. externalImports are discovered specifiers, not a full resolver closure.",
+  "files": [
+    {
+      "path": "apps/work/LICENSE",
+      "sha256": "754484caef88e85b078ca38195c4e7c2a73f1c0cc0d7ba0eae3526ae83e23e97",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreview.test.tsx",
+      "sha256": "fc68b3353a56a2e13c7bd7bf2d126d2b8d953cf77b52442fa3dd3e5612ca6853",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreview.tsx",
+      "sha256": "ca928d29d35d929ec7998cafb6e2ac972ba5a69676548d0804430116c49d1630",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreviewContainer.tsx",
+      "sha256": "a7eb1b27f3d5e875f04081798db25257fb751112b911531e6b79219731e1a6a8",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreviewLoading.test.tsx",
+      "sha256": "77298a9c1a2608b5946629586bb2a177eda13b5a6a63c8f1eefd9e71cfc89177",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreviewLoading.tsx",
+      "sha256": "d3fe4a43529cb6c352d2e48455ed546d0470b4251acdf5028ba65c77f821007e",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/FilePreviewToolbar.tsx",
+      "sha256": "280de42460ebfa0eecf57c161259d541c45ea5092399c1f757cef1c8739e1ae6",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/ac001-package.test.ts",
+      "sha256": "47f3091f911e38ebd41368ade4acb49742d822f6ba55ac2a3a5943e746135d74",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/adapters/open-file-viewer.test.ts",
+      "sha256": "68c9f187ee7a6be4d9fcdb01623224d8bbe4b3c434c713b9e7f10f822ff90e29",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/adapters/open-file-viewer.tsx",
+      "sha256": "cdccf771a1d5afc8a962d3ae5267dcd3024cf0c66d7d4a5cafa67316aa4dd058",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": [
+        "@open-file-viewer/core",
+        "@open-file-viewer/core/style.css",
+        "@open-file-viewer/react"
+      ]
+    },
+    {
+      "path": "apps/work/components/file-preview/index.ts",
+      "sha256": "65a2d7b678bef64fcc9d523d491d321e61c84b33a7768adb5a68e469b8ce282c",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/HttpFileProvider.ts",
+      "sha256": "c92edf8518e2a90aee4b295230cbe30a56cbccdf69674138e96a750a9510882f",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/KnowledgeFileProvider.ts",
+      "sha256": "67517e88a646e8479a5caf931920fbf5112ce0b4cbb61109f4741e23dd66dcc6",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/LocalFileProvider.ts",
+      "sha256": "b3612ec7543aa0f8f3c88d965ff291de102c1730adbb9f0b7119c2531407f8f3",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/descriptor-to-file.test.ts",
+      "sha256": "8a10bc9f682e6421e2dded0d9462fd81e56bc9f5e0e27abcc1eb28fae3cb9fe8",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/descriptor-to-file.ts",
+      "sha256": "40c2cd0de5bd504fa75009c9d229afef82b1c088dedc85b3a7062249f7807d93",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/providers/providers.test.ts",
+      "sha256": "3ce32815fdd3c0b565a876d74d765b56d49a33fc85de195c40475993e725a3cb",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/registry/file-detector.test.ts",
+      "sha256": "2369c2aaeea63f97b532326e03bf53dddfaff36005e96b3768c3ada4731735a2",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/registry/file-detector.ts",
+      "sha256": "99fac8cda9c218b5d3d49bf20ab7df793867fede1df35746810f7b79dd9a76af",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/registry/preview-registry.ts",
+      "sha256": "45e66d57116d75668902f9453faf16161581544ae7e484a14a04be1657347cf3",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/components/file-preview/types.ts",
+      "sha256": "1769a2559fa3383f14cf32c41d83740685d026a7e14b3590201015ac44133dd0",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/package.json",
+      "sha256": "c65b5da537d4a129367929da67a404758d98dc6c99133a9db4e2c5cf8ef5e949",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/project.json",
+      "sha256": "f747baf15338384567f4517bc58dc2d10d7b855d0692523d90d01a0d9b27503f",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/hermes.ts",
+      "sha256": "6f6296046b3864a3aadc5a99895f453b08faec396889796102e21cb483035cfd",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-authorized-transport.ts",
+      "sha256": "26bc3d972d57392a5c077c2c59e83814cb9fd0c93c36ea17af59eb2cdc96baf0",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-build-poller.test.ts",
+      "sha256": "56ef85927c894df498e4a2b7cdb4c22a1b83688f084bdcf7654c9994657d74da",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-build-poller.ts",
+      "sha256": "5c35a866a2a2e29481ccfec1df286419e220d51dd545792192d6c859a6105240",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-capability.ts",
+      "sha256": "b19deed4da7d52e13b18d11b060df768e6fff8f3e831887bab9c4adfd1ee16c4",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-chat-golden-observe.test.ts",
+      "sha256": "c039bda94fab37c0599bf9bc3a51cbc109875f36167ed1bd61818b63e13d00bb",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-contract-lock.test.ts",
+      "sha256": "ef2b4113302d8b69d72ad8b0a7f3dde370c25de169774ef8fe67edd77d1bd9f9",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-golden-consumer.test.ts",
+      "sha256": "8dbd429fab42d2702b87feaed1774a1564fa2ce865b41e14a1020c2485651f1d",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-http-provider.test.ts",
+      "sha256": "444723b0951b7f280471be0fc6221a3d2f97e3dd8e6f46c139f8fb4860abb3eb",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-http-provider.ts",
+      "sha256": "b323957bd3df1c33f609117eb54fa0f18badfc7cf29129433d77dc5f47cabc49",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-job-runtime.test.ts",
+      "sha256": "1d54ceea3ad58e3ec1398f2fc315720edb3b2313e60ec822a5453b636740773a",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-job-runtime.ts",
+      "sha256": "339ba032068697f8d183a806accf73ac20f350132293ca586b02534b51eedf25",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-job-runtime.upload-gate.test.ts",
+      "sha256": "21b304c0c1fa4af36d5df54d6f444b28c2e2cd1166ab789a4a09d7b4b19fbbef",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-mock-adapter.ts",
+      "sha256": "dbfdfdd5581f91ef80041f9ffd97a372cdfb28fd3064a45d4276e727ab37592e",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-mock-store.ts",
+      "sha256": "8f67b019977470a92c18c81e9d3b1f5a1d72be22fa4164a22c50a0b75d32c72c",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-mode-controller.test.ts",
+      "sha256": "0f40f4a483d12a8e97137c0ce705c1c74854fc721a5b293e624f6bf84bd10e1a",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-mode-controller.ts",
+      "sha256": "b6a557d16c80dcb1753f3081ca472837fccb686b01f463e7281fffd2519fb6e8",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-plugin-credentials.test.ts",
+      "sha256": "fe8154c712c75f7362cffe6ef40ada705dabad6787b68f6fe63f273e20d5e3e5",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-plugin-credentials.ts",
+      "sha256": "32b79e310b86276d5f66795dd7942d4861d7a62f4cebf4211d8fc2a9adc9599f",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-cache-store.test.ts",
+      "sha256": "2fef5069586f457c2e1efbd3ea9ce47c2fbcfb9be6117b93f28bfb9a4603a4af",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-cache-store.ts",
+      "sha256": "02a7e8bfebb0894c7e6c3330858300de17b76ccc6fd28c32bbf3565cc0b2fbeb",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-cleanup.test.ts",
+      "sha256": "e1a881dc5b96c478ff9dfcb13867895da2344f5e0236e0504d2077342ef4a5b8",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-materialize-dedup.test.ts",
+      "sha256": "59b74427f503417d6907d2a0ca3f4ea525d58e3ef09d9b84c63b391ed6b2b255",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-resolve.test.ts",
+      "sha256": "5c41a36fd63588d41c93eb378c92227f7bba7a183fe36e98238ef600ec357aae",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-resolve.ts",
+      "sha256": "7b2f4f3d62f5bc39b53aa2811565632ca738fdc274f2f3f4244f4c8adf55c1f9",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-preview-unique-trace.test.ts",
+      "sha256": "94f697efac30a58bf47b838ebc3a6b4cc9713f5d998420f911ca0fa958ffa149",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-provider-facade.test.ts",
+      "sha256": "bb3bde92f2bf7f4e3355e66b69406e1b17cbec1c19f21b290d7e434379c022c9",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-provider-facade.ts",
+      "sha256": "533c5b38755c7ceb2f53d86c65482c41a180b709cb057e3777f1269f97df1391",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-schema.ts",
+      "sha256": "3d8566bc2f36fa9bafa99e8ab958b559a59d139f1afcd0fc087c5d9ed44b43c9",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-service-url.test.ts",
+      "sha256": "ac9e1d951fe0afa0a35f0db9dcb27921b2eb2cc439ff422af35504d1e5b13508",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-service-url.ts",
+      "sha256": "e69abfd130deb4fc6b902f2781991d7b2eaeccb509ca7ed04c4a2c246a2c9334",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-upload-job-coordinator.test.ts",
+      "sha256": "292fc08ba27f0f850df624cfd41a43457d758c8c19c481b23914da8be0ed1afd",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-upload-job-coordinator.ts",
+      "sha256": "6457a792fe95c4d2af6fe831ecc36a443fb32eb04d848a031f6fe96c1e6ddf2c",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-upload-job-store.test.ts",
+      "sha256": "f94a31f4a0cf0d8e06feaa958a534def159fad55df74fa66e213e63251f7a0b7",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/knowledge-upload-job-store.ts",
+      "sha256": "f652b2f5bd7eb662237a771030125fdc5fa4671351a44b74786a77b761781e82",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/legacy-knowledge-send-guard.test.ts",
+      "sha256": "610acfdb840c4825f6456dfac943c31e2faf17f510dc3e4573fe1ea505be53de",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/legacy-knowledge-send-guard.ts",
+      "sha256": "175f7ba1019ec355c660a673f6b072c45b45678dd1de0cd4b06b9df2267595ff",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/register-knowledge-base-ipc.ts",
+      "sha256": "200c5f85c898e619972c6b1f5dfce14bb1ec56cb59fee3b785942794d808062e",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/register-knowledge-job-ipc.ts",
+      "sha256": "eda1b7bc601dd6c590db94a97e369a040bd852b492cb74ecd75371a62f3ca970",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/register-knowledge-mode-ipc.ts",
+      "sha256": "75a6c864fa0951efd410f26b0bbacad238269e06821c54acf146ff6b8a3724aa",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/knowledge/register-knowledge-set-ipc.ts",
+      "sha256": "be164c8fe4ccd3f9394883b5151039a03928e7e7d7d0e9f4fd8535efbb697886",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/main/skill-run/skill-run-gateway-client.ts",
+      "sha256": "8661bd3803536917001261efb34c9ed3cfd76414198885d268b729252e4d3204",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/chat-knowledge-context.test.ts",
+      "sha256": "ed004b86fc928639809d3851c8915e725b10552a227a59903dbab144761ae837",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/chat-knowledge-context.ts",
+      "sha256": "a2311a57c7d18541ac1bf51fc8e0002d234afc0d7dee5cc6daefa3dac9632ed1",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/knowledge-base-ipc.test.ts",
+      "sha256": "47677933856af80504284e949420d444db6c1052c395899735899ad78eb0b013",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/knowledge-base-ipc.ts",
+      "sha256": "255dcc70ee4cb4fdafb3326d21b21236e82f3dc2628b05cd000426ec0348285a",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/knowledge-errors.ts",
+      "sha256": "570526f0550a9c7fbc51931788f85d00945c1391cd0ab2f246d26a9cf0b6b0da",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/knowledge-job-ipc.ts",
+      "sha256": "f494acac549a4d189be7ff80212d7cbec7f4a8451c4e1bd146c6d164075e62f8",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/knowledge-set-ipc.ts",
+      "sha256": "de4a87d12ef4de8492fb9124e0effd47ce7d7534568b611f3cec1cd31e8bf075",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    },
+    {
+      "path": "apps/work/src/shared/knowledge/use-knowledge-facade.ts",
+      "sha256": "124001943838693a5d27c0bb581231dff3c02cc863ea127e54c74f41b82ef780",
+      "license": "MIT",
+      "classification": "source-candidate",
+      "targetPath": null,
+      "externalImports": []
+    }
+  ]
+}
