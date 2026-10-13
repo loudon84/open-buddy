@@ -1,0 +1,7 @@
+{
+  "id": "crm-plugin",
+  "version": "1.0",
+  "type": "enterprise",
+  "permissions": ["browser", "network"],
+  "capabilities": ["tool", "ui", "connector"]
+}

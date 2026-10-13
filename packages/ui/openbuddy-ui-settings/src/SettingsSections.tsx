@@ -126,6 +126,7 @@ import {
 } from "@/lib/casdoor/casdoor-client";
 import { useAgentPaths } from "@openbuddy/ui-shared/use-agent-paths";
 import { AgentRuntimeSection } from "./AgentRuntimeSection";
+import { PluginCenterSection } from "./PluginCenterSection";
 import { listen } from "@/lib/platform/electron-api";
 import { confirm, invoke, save } from "@/lib/platform/electron-api";
 import { setToast } from "@/stores/toast-store";
@@ -2834,3 +2835,7 @@ export function MicrokernelSettingsPanel() {
  * 不影响 ui-email 自身模块边界。
  */
 export { PrivacySettingsPanel } from "@openbuddy/ui-email/ai";
+
+export function EnterprisePluginCenter() {
+  return <PluginCenterSection />;
+}

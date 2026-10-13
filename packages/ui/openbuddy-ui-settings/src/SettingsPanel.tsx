@@ -76,6 +76,7 @@ import {
   TokenIntrospectionPanel,
   GatewayHealthPanel,
   WebhookSubscriptionPanel,
+  EnterprisePluginCenter,
 } from "./SettingsSections";
 import { EnterpriseLoginPanel } from "./EnterpriseLoginPanel";
 import { useRendererContributions, useRendererSlot } from "@/lib/runtime/renderer-plugin-runtime";
@@ -626,7 +627,10 @@ const OpenBuddyPluginPanelImpl = (_openbuddyPluginImpl ?? OpenBuddyPluginPanel) 
             ) : active === "resources" ? (
               <ResourceCatalogPanelImpl />
             ) : active === "plugins" ? (
-              <PluginsPanelImpl />
+              <>
+                <EnterprisePluginCenter />
+                <PluginsPanelImpl />
+              </>
             ) : active === "openbuddy-plugin" ? (
               <OpenBuddyPluginPanelImpl />
             ) : active === "policy" ? (

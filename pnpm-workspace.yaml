@@ -58,6 +58,7 @@ packages:
   - 'packages/payment'
   - 'packages/runtime-core'
   - 'packages/runtime-adapters'
+  - 'packages/plugin-platform'
   - 'packages/renderer/*'
   - 'packages/runtime/*'
   - 'packages/saml'
