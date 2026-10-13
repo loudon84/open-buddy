@@ -1,6 +1,7 @@
 export {
   assertTransition,
   type Capability,
+  type IdentityContext,
   type RuntimeAdapter,
   type RuntimeHealth,
   type RuntimePhase,

@@ -16,7 +16,15 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { type ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type { IdentityContext } from "@openbuddy/shared-types";
 import type { OpenBuddyThinkingLevel } from "../../ipc/validation";
+
+export interface AgentPromptOptions {
+  traceId?: string;
+  sessionId?: string;
+  signal?: AbortSignal;
+  identityContext?: IdentityContext;
+}
 import { cachedListAllPiSessions } from "./_cache";
 import { type SessionHeaderSummary, scanSessionDir } from "./session-metadata";
 import { type AgentHostState, type PiToolRegistry } from "./_state-shape";
@@ -29,7 +37,7 @@ let state: AgentHostState | null = null;
 let piHomeImpl: () => string = () => "";
 let getSessionImpl: () => any = () => null;
 let getModelImpl: () => any = () => null;
-let promptImpl: (text: string, options?: any) => Promise<unknown> = async () => undefined;
+let promptImpl: (text: string, options?: AgentPromptOptions) => Promise<unknown> = async () => undefined;
 let abortImpl: (options?: any) => Promise<unknown> = async () => undefined;
 let setModelImpl: (modelId: string, options?: any) => Promise<unknown> = async () => undefined;
 let setThinkingLevelImpl: (level: any, options?: any) => Promise<unknown> = async () => undefined;
@@ -49,7 +57,7 @@ export interface InstallPiRuntimeFactoriesDeps {
   /** host-functions.getModel */
   getModel: () => any;
   /** host-functions.prompt */
-  prompt: (text: string, options?: any) => Promise<unknown>;
+  prompt: (text: string, options?: AgentPromptOptions) => Promise<unknown>;
   /** host-functions.abort */
   abort: (options?: any) => Promise<unknown>;
   /** host-functions.setModel */
@@ -130,7 +138,7 @@ export interface PiAgentRuntime {
   tools: PiToolRegistry;
   getSession: () => any;
   getModel: () => any;
-  prompt: (text: string, options?: any) => Promise<unknown>;
+  prompt: (text: string, options?: AgentPromptOptions) => Promise<unknown>;
   abort: (options?: any) => Promise<unknown>;
   setModel: (modelId: string, options?: any) => Promise<unknown>;
   onEvent: (handler: any) => unknown;

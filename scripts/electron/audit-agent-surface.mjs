@@ -219,7 +219,8 @@ const coverageClasses = {
     "email:invalidate-provider",
     // Enterprise remote runtime: needs a configured gateway and a signed-in tenant.
     // Covered by tests/enterprise/enterprise-runtime-controller.test.ts against a loopback gateway.
-    "backend-auth:status", "backend-auth:origin-save", "backend-auth:login", "backend-auth:cancel", "backend-auth:refresh", "backend-auth:logout",
+    "backend-auth:status", "backend-auth:origin-save", "backend-auth:login", "backend-auth:cancel", "backend-auth:refresh", "backend-auth:logout", "backend-auth:test-connection",
+    "identity:context", "identity:refresh",
     "enterprise-runtime:status", "enterprise-runtime:connect", "enterprise-runtime:create-session", "enterprise-runtime:send",
     "enterprise-runtime:cancel", "enterprise-runtime:decide", "enterprise-runtime:subscribe", "enterprise-runtime:unsubscribe",
     "agent:transaction-list",

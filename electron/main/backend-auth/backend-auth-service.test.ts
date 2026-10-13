@@ -321,3 +321,93 @@ describe("BackendAuthService partition and probe", () => {
     expect(await slow.testConnection("https://id.example")).toEqual({ ok: false, error: "连接失败" });
   });
 });
+
+describe("BackendAuthService identity hooks", () => {
+  it("merges the identity summary into the status view", () => {
+    const auth = service(memory(), {
+      getIdentitySummary: () => ({ tenant: { id: "t1", name: "ACME" }, stale: false }),
+    });
+    expect(auth.status().tenant).toEqual({ id: "t1", name: "ACME" });
+    expect(auth.status().identityStale).toBeUndefined();
+    const stale = service(memory(), {
+      getIdentitySummary: () => ({ tenant: { id: "t1", name: "ACME" }, stale: true }),
+    });
+    expect(stale.status().identityStale).toBe(true);
+  });
+
+  it("notifies identity when startup refresh keeps the session", async () => {
+    const backend = await fakeBackend(() => ({
+      status: 200,
+      json: { data: { access_token: "next", refresh_token: "r2", expires_in: 3600, user: { name: "Ada", must_change_password: false } } },
+    }));
+    closers.push(backend.close);
+    const store = memory();
+    store.origin = backend.origin;
+    store.cipher = JSON.stringify({
+      accessToken: "old", refreshToken: "r1", expiresAt: 2_000, needsOrgSetup: false, user: { name: "Ada", mustChangePassword: false },
+    });
+    const events: string[] = [];
+    const auth = service(store, { fetchImpl: fetch });
+    auth.setIdentityListener({
+      onSignedIn: () => events.push("in"),
+      onSignedOut: (reason) => events.push(reason),
+    });
+    await auth.init();
+    expect(events).toEqual(["in"]);
+    expect(auth.identityAuth()).toEqual({ origin: backend.origin, accessToken: "next" });
+  });
+
+  it("notifies logout, origin change, and an expired refresh", async () => {
+    const ok = await fakeBackend((path) => {
+      if (path === "/api/v1/auth/refresh") {
+        return { status: 200, json: { data: { access_token: "next", refresh_token: "r2", expires_in: 3600, user: { name: "Ada", must_change_password: false } } } };
+      }
+      return { status: 200, json: { message: "已登出" } };
+    });
+    closers.push(ok.close);
+    const store = memory();
+    store.origin = ok.origin;
+    store.cipher = JSON.stringify({
+      accessToken: "tok", refreshToken: "r1", expiresAt: Date.now() + 86_400_000, needsOrgSetup: false, user: { name: "Ada", mustChangePassword: false },
+    });
+    const events: string[] = [];
+    const auth = service(store, { fetchImpl: fetch, now: () => Date.now() });
+    auth.setIdentityListener({
+      onSignedIn: () => events.push("in"),
+      onSignedOut: (reason) => events.push(reason),
+    });
+    await auth.init();
+    await auth.logout();
+    expect(events).toContain("logout");
+
+    store.cipher = JSON.stringify({
+      accessToken: "tok", refreshToken: "r1", expiresAt: Date.now() + 86_400_000, needsOrgSetup: false, user: { name: "Ada", mustChangePassword: false },
+    });
+    store.origin = ok.origin;
+    const switched = service(store, { fetchImpl: fetch, now: () => Date.now() });
+    const switchedEvents: string[] = [];
+    switched.setIdentityListener({
+      onSignedIn: () => switchedEvents.push("in"),
+      onSignedOut: (reason) => switchedEvents.push(reason),
+    });
+    await switched.init();
+    await switched.saveOrigin("https://id.example");
+    expect(switchedEvents).toContain("origin_change");
+
+    const failing = await fakeBackend(() => ({ status: 400, json: { message: "登录已失效，请重新发起登录" } }));
+    closers.push(failing.close);
+    store.origin = failing.origin;
+    store.cipher = JSON.stringify({
+      accessToken: "tok", refreshToken: "r1", expiresAt: 1, needsOrgSetup: false, user: { name: "Ada", mustChangePassword: false },
+    });
+    const expired = service(store, { fetchImpl: fetch });
+    const expiredEvents: string[] = [];
+    expired.setIdentityListener({
+      onSignedIn: () => expiredEvents.push("in"),
+      onSignedOut: (reason) => expiredEvents.push(reason),
+    });
+    await expired.init();
+    expect(expiredEvents).toContain("expired");
+    expect(expired.identityAuth()).toBeNull();
+  });
+});

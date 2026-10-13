@@ -14,6 +14,7 @@
  *   additional state can extend it.
  */
 import type { BrowserWindow } from "electron";
+import type { IdentityContext } from "@openbuddy/shared-types";
 import type { AgentHostFacade } from "../agent/host-modules/bootstrap/build-agent-host-facade";
 import type { CasdoorAuthService } from "../casdoor/casdoor-auth";
 
@@ -46,4 +47,6 @@ export interface AgentHostIpcDeps {
   awaitExtensionsBound?: () => Promise<void>;
   /** Window provider for renderer event emits. */
   getWindow: () => BrowserWindow | null;
+  /** Current enterprise identity context, when the desktop is signed in. */
+  getIdentityContext?: () => IdentityContext | null;
 }

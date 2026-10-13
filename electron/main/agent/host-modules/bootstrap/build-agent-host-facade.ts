@@ -129,7 +129,7 @@ export interface AgentHostFacade {
 
 
   // A-5: signal propagated for renderer-initiated cancellation.
-  prompt: (text: string, options?: { traceId?: TraceId; sessionId?: SessionId; signal?: AbortSignal }) => Promise<PromptDispatchResult>;
+  prompt: (text: string, options?: { traceId?: TraceId; sessionId?: SessionId; signal?: AbortSignal; identityContext?: import("@openbuddy/shared-types").IdentityContext }) => Promise<PromptDispatchResult>;
   promptContent: (
     content: ReadonlyArray<
       | { type: "text"; text: string }

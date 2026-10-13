@@ -5,11 +5,15 @@ import { EnterpriseLoginPanel } from "../EnterpriseLoginPanel";
 const status = vi.fn();
 const save = vi.fn();
 const testConnection = vi.fn();
+const refreshIdentity = vi.fn();
 
 vi.mock("@/lib/backend-auth/backend-auth-client", () => ({
   backendAuthStatus: () => status(),
   backendAuthSaveOrigin: (origin: string) => save(origin),
   backendAuthTestConnection: (origin: string) => testConnection(origin),
+}));
+vi.mock("@/lib/identity/identity-client", () => ({
+  identityRefresh: () => refreshIdentity(),
 }));
 
 afterEach(() => {
@@ -17,6 +21,7 @@ afterEach(() => {
   status.mockReset();
   save.mockReset();
   testConnection.mockReset();
+  refreshIdentity.mockReset();
 });
 
 describe("EnterpriseLoginPanel", () => {
@@ -35,5 +40,28 @@ describe("EnterpriseLoginPanel", () => {
     await waitFor(() => expect(testConnection).toHaveBeenCalledWith("https://id.example"));
     expect(await screen.findByTestId("enterprise-login-probe")).toHaveTextContent("连接失败");
     expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the identity refresh button while the request is in flight", async () => {
+    status.mockResolvedValue({ origin: "https://id.example", status: "signed_in", phase: "idle", needsOrgSetup: false, mustChangePassword: false });
+    let release: (value: { ok: true; context: null }) => void = () => undefined;
+    refreshIdentity.mockReturnValue(new Promise((resolve) => { release = resolve; }));
+    render(<EnterpriseLoginPanel />);
+    await screen.findByTestId("enterprise-login-origin");
+    fireEvent.click(screen.getByTestId("enterprise-login-refresh"));
+    expect(screen.getByTestId("enterprise-login-refresh")).toBeDisabled();
+    expect(screen.getByTestId("enterprise-login-refresh")).toHaveTextContent("刷新中…");
+    release({ ok: true, context: null });
+    expect(await screen.findByTestId("enterprise-login-refresh-note")).toHaveTextContent("已刷新");
+    expect(screen.getByTestId("enterprise-login-refresh")).not.toBeDisabled();
+  });
+
+  it("shows the identity refresh error", async () => {
+    status.mockResolvedValue({ origin: "https://id.example", status: "signed_out", phase: "idle", needsOrgSetup: false, mustChangePassword: false });
+    refreshIdentity.mockResolvedValue({ ok: false, error: "当前账号无权限访问企业资源" });
+    render(<EnterpriseLoginPanel />);
+    await screen.findByTestId("enterprise-login-origin");
+    fireEvent.click(screen.getByTestId("enterprise-login-refresh"));
+    expect(await screen.findByTestId("enterprise-login-refresh-error")).toHaveTextContent("当前账号无权限访问企业资源");
   });
 });

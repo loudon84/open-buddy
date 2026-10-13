@@ -1059,3 +1059,4 @@ export function findPiPackageCatalogEntry(packageName: string): PiPackageCatalog
 }
 // R32 — Pi 扩展市场的 main ↔ renderer 线契约(单一定义,见文件头注释)。
 export * from "./pi-market";
+export * from "./identity";

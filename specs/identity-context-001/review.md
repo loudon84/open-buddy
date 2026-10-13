@@ -45,3 +45,11 @@
 - R7 已应用：PRD v1.2 补充手动刷新按钮状态。
 
 **Verdict after Round 2**: pass
+
+### 2026-10-13 Round 3（批准前代码核对）
+
+- 发现 R3 事实性错误：`agentHost.prompt` 实际签名在 `electron/main/agent/host-modules/pi-runtime-factories.ts`（`prompt: (text: string, options?: any)`），`packages/runtime/openbuddy-runtime-adapter/src/types.ts` 的 `CallOptions` 只属于 v1 远程契约的 `RuntimeAdapter`，与 Pi host 无关。已在 PRD v1.2 修正 REQ-IDC-003、§15 Implementation Boundary 与 §16 R3 行：目标改为在 host 侧定义 `PromptOptions`（含 `identityContext`），`prompt-cycle.ts` 调用处传入。
+- R4 复核无误：`RuntimeRequest` 在 `packages/runtime-core/src/runtime-adapter.ts`（`{text, sessionId?}`），`RuntimeManager.chat` → `registry.getActive().chat(request)` 透传链路成立。
+- R1/R2/R5/R6/R7 复核无误。
+
+**Verdict after Round 3**: pass — `status: APPROVED_FOR_PLAN`

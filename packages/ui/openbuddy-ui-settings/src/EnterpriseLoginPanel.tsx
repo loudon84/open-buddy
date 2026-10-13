@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { backendAuthSaveOrigin, backendAuthStatus, backendAuthTestConnection } from "@/lib/backend-auth/backend-auth-client";
+import { identityRefresh } from "@/lib/identity/identity-client";
 
 /** Settings section for the enterprise identity gateway origin. */
 export function EnterpriseLoginPanel() {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [probe, setProbe] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshNote, setRefreshNote] = useState("");
+  const [refreshError, setRefreshError] = useState("");
 
   useEffect(() => {
     void backendAuthStatus().then((view) => setValue(view.origin)).catch(() => undefined);
@@ -21,6 +25,21 @@ export function EnterpriseLoginPanel() {
     }
     setError("");
     setValue(saved.origin);
+  }
+
+  async function refreshIdentity(): Promise<void> {
+    setRefreshing(true);
+    setRefreshNote("");
+    setRefreshError("");
+    try {
+      const result = await identityRefresh();
+      if (!result.ok) setRefreshError(result.error);
+      else setRefreshNote("已刷新");
+    } catch (error) {
+      setRefreshError(error instanceof Error ? error.message : "身份上下文暂不可用，部分功能受限");
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   async function test(): Promise<void> {
@@ -43,7 +62,12 @@ export function EnterpriseLoginPanel() {
       <p>用于连接企业身份认证服务</p>
       <button type="button" data-testid="enterprise-login-save" onClick={() => { void commit(); }}>保存</button>
       <button type="button" data-testid="enterprise-login-test" onClick={() => { void test(); }}>测试连接</button>
+      <button type="button" data-testid="enterprise-login-refresh" disabled={refreshing} onClick={() => { void refreshIdentity(); }}>
+        {refreshing ? "刷新中…" : "刷新身份上下文"}
+      </button>
       {error ? <p role="alert">{error}</p> : null}
+      {refreshNote ? <p data-testid="enterprise-login-refresh-note">{refreshNote}</p> : null}
+      {refreshError ? <p role="alert" data-testid="enterprise-login-refresh-error">{refreshError}</p> : null}
       {probe ? <p data-testid="enterprise-login-probe">{probe}</p> : null}
     </section>
   );

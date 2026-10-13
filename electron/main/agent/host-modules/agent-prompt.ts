@@ -114,7 +114,7 @@ function onPluginEvent(handler: PluginEventHandler): () => void {
 
 export async function prompt(
   text: string,
-  options?: { traceId?: string; sessionId?: string },
+  options?: { traceId?: string; sessionId?: string; signal?: AbortSignal; identityContext?: { user: { id: string }; tenant: { id: string } } },
 ): Promise<void> {
   const traceId = options?.traceId ?? generateTraceId();
   const sessionId = options?.sessionId ?? state.session?.sessionId;
@@ -139,6 +139,8 @@ export async function prompt(
   console.log("[openbuddy] pi prompt.start", {
     traceId,
     sessionId,
+    userId: options?.identityContext?.user.id,
+    tenantId: options?.identityContext?.tenant.id,
     textLength: text.length,
     provider: resolvedModel?.provider,
     model: resolvedModel?.id,

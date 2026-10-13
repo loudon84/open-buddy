@@ -26,6 +26,20 @@ export type BackendAuthView = {
   mustChangePassword: boolean;
   phase: BackendAuthPhase;
   error?: string;
+  tenant?: { id: string; name: string };
+  identityStale?: boolean;
+};
+
+export type IdentitySessionEnd = "logout" | "origin_change" | "expired";
+
+export type IdentityListener = {
+  onSignedIn: () => void;
+  onSignedOut: (reason: IdentitySessionEnd) => void;
+};
+
+export type IdentitySummary = {
+  tenant?: { id: string; name: string };
+  stale: boolean;
 };
 
 type StoredUser = { name: string; mustChangePassword: boolean };
@@ -57,6 +71,7 @@ export type BackendAuthDeps = {
   loadCipher?: () => string | null;
   saveCipher?: (cipher: string | null) => void;
   listen?: (onCallback: (url: URL) => void) => Promise<Listener>;
+  getIdentitySummary?: () => IdentitySummary;
 };
 
 type StatusListener = (view: BackendAuthView) => void;
@@ -121,6 +136,8 @@ export class BackendAuthService {
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private statusListener: StatusListener | null = null;
+  private identityListener: IdentityListener | null = null;
+  private identitySummary: (() => IdentitySummary) | null = null;
   private authClose: (() => void) | null = null;
   private callbackConsumed = false;
   private suppressWindowCancel = false;
@@ -134,12 +151,26 @@ export class BackendAuthService {
     this.statusListener = listener;
   }
 
+  setIdentityListener(listener: IdentityListener | null): void {
+    this.identityListener = listener;
+  }
+
+  setIdentitySummary(provider: (() => IdentitySummary) | null): void {
+    this.identitySummary = provider;
+  }
+
+  identityAuth(): { origin: string; accessToken: string } | null {
+    if (!this.session || !this.origin) return null;
+    return { origin: this.origin, accessToken: this.session.accessToken };
+  }
+
   setParentWindow(getWindow: () => BrowserWindow | null): void {
     this.getParentWindow = getWindow;
   }
 
   status(): BackendAuthView {
     const visible = !this.hold && this.session !== null && !this.error;
+    const summary = (this.identitySummary ?? this.deps.getIdentitySummary)?.();
     return {
       status: visible ? "signed_in" : !this.hold && this.error ? "error" : "signed_out",
       origin: this.origin,
@@ -148,6 +179,8 @@ export class BackendAuthService {
       mustChangePassword: visible ? (this.session?.user.mustChangePassword ?? false) : false,
       phase: this.phase,
       error: this.hold ? undefined : this.error,
+      ...(summary?.tenant ? { tenant: summary.tenant } : {}),
+      ...(summary?.stale ? { identityStale: true } : {}),
     };
   }
 
@@ -166,6 +199,7 @@ export class BackendAuthService {
     this.publish();
     if (this.session) await this.refresh();
     this.hold = false;
+    if (this.session) this.identityListener?.onSignedIn();
     this.publish();
     return this.status();
   }
@@ -267,8 +301,10 @@ export class BackendAuthService {
     const body = await this.post("/api/v1/auth/refresh", { refresh_token: this.session.refreshToken });
     if (this.round !== round) return this.status();
     if (!body.ok) {
+      const hadSession = this.session !== null;
       this.clearSession();
       this.error = undefined;
+      if (hadSession) this.identityListener?.onSignedOut("expired");
       this.publish();
       return this.status();
     }
@@ -292,9 +328,11 @@ export class BackendAuthService {
         // The local session is deleted even when the request cannot be sent.
       }
     }
+    const hadSession = this.session !== null;
     this.clearSession();
     this.phase = "idle";
     this.error = undefined;
+    if (hadSession) this.identityListener?.onSignedOut("logout");
     await this.clearPartition();
     this.publish();
     return this.status();
@@ -302,11 +340,13 @@ export class BackendAuthService {
 
   private async dropOrigin(next: string): Promise<void> {
     const previous = this.origin;
+    const hadSession = this.session !== null;
     this.round += 1;
     this.closeListener();
     this.phase = "idle";
     if (previous && this.session) await this.logoutAt(previous);
     this.clearSession();
+    if (hadSession) this.identityListener?.onSignedOut("origin_change");
     this.origin = next;
     this.error = undefined;
     (this.deps.saveOriginValue ?? writeOriginToStore)(next);
@@ -348,7 +388,7 @@ export class BackendAuthService {
     const payload = asRecord(body.data);
     const access = payload?.access_token;
     const refresh = payload?.refresh_token;
-    if (typeof access !== "string" || typeof refresh !== "string") {
+    if (!payload || typeof access !== "string" || typeof refresh !== "string") {
       this.abandon(round, "登录未完成");
       return;
     }
@@ -358,6 +398,7 @@ export class BackendAuthService {
     this.error = undefined;
     this.scheduleRefresh();
     this.publish();
+    this.identityListener?.onSignedIn();
   }
 
   private async ensureFresh(): Promise<void> {

@@ -23,26 +23,30 @@ export function hostLog(logger: MainLogger, scope: string): MainLogger {
   return withContext(logger, { scope });
 }
 
-export function hostReceived(channel: string, traceId?: string, sessionId?: string): void {
+type IdentityLog = { userId?: string; tenantId?: string };
+
+export function hostReceived(channel: string, traceId?: string, sessionId?: string, identity?: IdentityLog): void {
   hostLog(currentHostLogger(), "ipc-agent").info(
-    { msg: "ipc.received", channel, traceId, sessionId },
+    { msg: "ipc.received", channel, traceId, sessionId, userId: identity?.userId, tenantId: identity?.tenantId },
     `${channel} received`,
   );
 }
 
-export function hostDispatched(channel: string, traceId?: string, sessionId?: string): void {
+export function hostDispatched(channel: string, traceId?: string, sessionId?: string, identity?: IdentityLog): void {
   hostLog(currentHostLogger(), "ipc-agent").info(
-    { msg: "ipc.dispatched", channel, traceId, sessionId },
+    { msg: "ipc.dispatched", channel, traceId, sessionId, userId: identity?.userId, tenantId: identity?.tenantId },
     `${channel} dispatched`,
   );
 }
 
-export function hostFailed(channel: string, traceId?: string, error?: unknown): void {
+export function hostFailed(channel: string, traceId?: string, error?: unknown, identity?: IdentityLog): void {
   hostLog(currentHostLogger(), "ipc-agent").error(
     {
       msg: "ipc.failed",
       channel,
       traceId,
+      userId: identity?.userId,
+      tenantId: identity?.tenantId,
       error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
     },
     `${channel} failed`,

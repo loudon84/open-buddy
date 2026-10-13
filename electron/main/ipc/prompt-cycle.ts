@@ -53,10 +53,18 @@ import {
   stringValue,
   thinkingLevel,
 } from "./validation";
+import { casdoorAudit } from "../casdoor/casdoor-audit";
 import { dispatchPrompt } from "../runtime/dispatch-prompt";
 import { getPlatformRuntimeManager } from "../runtime/platform-runtime-handle";
 import { publishAssistantTurn } from "../runtime/publish-assistant-turn";
 import type { AgentHostIpcDeps } from "./_agent-host-deps";
+
+const RUNTIME_DENIED = "当前账号无权限使用该 Agent，请切换到有权限的 Runtime。";
+
+function identityLog(context: { user: { id: string }; tenant: { id: string } } | null): { userId?: string; tenantId?: string } | undefined {
+  if (!context) return undefined;
+  return { userId: context.user.id, tenantId: context.tenant.id };
+}
 
 /**
  * AbortSignal plumbing for prompt / steer / follow-up.
@@ -97,31 +105,49 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     const sessionId = payload?.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
     const text = requiredString(typeof input === "string" ? input : payload?.text, "prompt");
     const traceId = optionalString((typeof input === "string" ? undefined : payload?.traceId), "traceId") ?? generateTraceId();
+    const identityContext = deps.getIdentityContext?.() ?? null;
+    const identityFields = identityLog(identityContext);
     const platform = getPlatformRuntimeManager();
     const activeRuntimeId = platform?.activeId ?? "pi";
+    const allowed = identityContext?.policies?.agents;
+    if (allowed && !allowed.includes(activeRuntimeId)) {
+      const denied = new Error(RUNTIME_DENIED);
+      hostFailed("agent:prompt", traceId, denied, identityFields);
+      throw denied;
+    }
+    if (identityContext) {
+      void casdoorAudit.record({
+        event: "identity.context.use",
+        outcome: "success",
+        subject: identityContext.user.id,
+        tenantId: identityContext.tenant.id,
+        detail: JSON.stringify({ runtimeId: activeRuntimeId, sessionId }),
+      });
+    }
     if (activeRuntimeId !== "pi") {
       if (!platform) throw new Error("platform runtime is not installed");
-      hostReceived("agent:prompt", traceId, sessionId);
+      hostReceived("agent:prompt", traceId, sessionId, identityFields);
       try {
         await dispatchPrompt({
           activeRuntimeId,
           text,
           sessionId,
+          identityContext: identityContext ?? undefined,
           promptPi: async () => undefined,
-          chatActive: () => platform.chat({ text, sessionId }),
+          chatActive: () => platform.chat({ text, sessionId, identityContext: identityContext ?? undefined }),
           publishAssistant: publishAssistantTurn,
         });
-        hostDispatched("agent:prompt", traceId, sessionId);
+        hostDispatched("agent:prompt", traceId, sessionId, identityFields);
         return { ok: true };
       } catch (err) {
-        hostFailed("agent:prompt", traceId, err);
+        hostFailed("agent:prompt", traceId, err, identityFields);
         throw err;
       }
     }
     await ensureAgentHost();
     const activeSessionId = agentHost.getSession()?.sessionId;
     if (sessionId !== undefined && sessionId !== activeSessionId) throw new Error(`Pi session is not loaded: ${sessionId}`);
-    hostReceived("agent:prompt", traceId, sessionId);
+    hostReceived("agent:prompt", traceId, sessionId, identityFields);
     // A-5: register a per-request AbortController so agent:abort can
     // cancel the in-flight prompt. If an earlier prompt is still
     // running for the same session, abort it first (back-pressure).
@@ -131,11 +157,11 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     inflightAbortControllers.set(key, controller);
     try {
       await awaitExtensionsBound(deps);
-      await agentHost.prompt(text, { traceId, sessionId, signal: controller.signal });
-      hostDispatched("agent:prompt", traceId, sessionId);
+      await agentHost.prompt(text, { traceId, sessionId, signal: controller.signal, identityContext: identityContext ?? undefined });
+      hostDispatched("agent:prompt", traceId, sessionId, identityFields);
       return { ok: true };
     } catch (err) {
-      hostFailed("agent:prompt", traceId, err);
+      hostFailed("agent:prompt", traceId, err, identityFields);
       throw err;
     } finally {
       if (inflightAbortControllers.get(key) === controller) inflightAbortControllers.delete(key);

@@ -1,3 +1,7 @@
+import type { IdentityContext } from "@openbuddy/shared-types";
+
+export type { IdentityContext };
+
 export type RuntimeType = "local_process" | "remote_gateway" | "embedded" | "container";
 
 export type RuntimePhase =
@@ -19,6 +23,7 @@ export interface RuntimeHealth {
 export interface RuntimeRequest {
   text: string;
   sessionId?: string;
+  identityContext?: IdentityContext;
 }
 
 export interface RuntimeResponse {

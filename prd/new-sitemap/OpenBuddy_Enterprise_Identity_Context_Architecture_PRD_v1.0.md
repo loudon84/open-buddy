@@ -14,7 +14,7 @@ related_docs:
 - OpenBuddy Enterprise Login Flow Optimization PRD v1.2
 - nodeskclaw-backend Identity Gateway + Casdoor Adapter Engineering PRD v1.2
 repository: "https://github.com/loudon84/open-buddy"
-status: REVIEWED
+status: APPROVED_FOR_PLAN
 target_release: Phase 2
 title: OpenBuddy Enterprise Identity Context Architecture PRD v1.2
 version: 1.2
@@ -327,7 +327,7 @@ MUST：
 
 - `IdentityContext` 类型定义放在 `packages/shared/openbuddy-types/src/identity.ts`（新建），`runtime-core` 和 `electron/main/identity/` 都从这里导入。`runtime-core` 是纯接口包，不依赖 Electron。
 - `RuntimeRequest` 扩展 `identityContext?: IdentityContext`（`packages/runtime-core/src/runtime-adapter.ts`）。
-- Pi 分支：`agentHost.prompt(text, { identityContext, ... })`。修改 `packages/runtime/openbuddy-runtime-adapter/src/types.ts` 的 `CallOptions`，加 `identityContext?: IdentityContext`。`agentHost.prompt` 的签名是 `prompt(text: string, options?: CallOptions)`，不需要新增方法。
+- Pi 分支：`agentHost.prompt(text, { identityContext, ... })`。`agentHost` 是 Pi host（`electron/main/agent/host-modules/pi-runtime-factories.ts`），其 `prompt` 的 options 当前无显式类型（`prompt-cycle.ts` 调用处传 `{ traceId, sessionId, signal }`）。实施时在 host 侧定义 `PromptOptions`（含 `traceId/sessionId/signal/identityContext`），`prompt-cycle.ts` 调用处加 `identityContext`。不改 `packages/runtime/openbuddy-runtime-adapter/src/types.ts` 的 `CallOptions`（那是 v1 远程运行时契约的 options，与 Pi host 无关）。
 - Hermes 分支：`platform.chat({ text, sessionId, identityContext })` 透传给 Gateway。`dispatch-prompt.ts` 的 `PromptDispatch` 扩展 `identityContext?: IdentityContext`，`chatActive: () => platform.chat({ text, sessionId, identityContext })`。`prompt-cycle.ts` 在调用 `dispatchPrompt` 前从 `IdentityService` 获取当前 context。
 - `policies.agents` 控制 runtime 可用性；无权限时 agent:prompt 拒绝，提示切换到有权限的 runtime。
 - 当前 session 用旧 context，新 session 用新 context。
@@ -481,7 +481,7 @@ electron/main/ipc/prompt-cycle.ts (注入 identityContext)
 electron/main/runtime/dispatch-prompt.ts (PromptDispatch 扩展)
 packages/shared/openbuddy-types/src/identity.ts (新建，IdentityContext 类型)
 packages/runtime-core/src/runtime-adapter.ts (RuntimeRequest 扩展)
-packages/runtime/openbuddy-runtime-adapter/src/types.ts (CallOptions 扩展)
+electron/main/agent/host-modules/pi-runtime-factories.ts (PromptOptions 类型，identityContext 透传)
 src/lib/identity/                 (新建，identity-client)
 packages/ui/openbuddy-ui-settings/src/EnterpriseLoginPanel.tsx (手动刷新按钮)
 packages/ui/openbuddy-ui-sidebar/src/Sidebar.tsx (tenant 显示)
@@ -554,10 +554,17 @@ identity/context API (GET /api/v1/identity/context)
 | --- | --- |
 | R1 | `backend-auth` 暴露 `onSignedIn(listener)` 钩子，`IdentityService` 注册后由 `backend-auth` 在 `init()` 完成且 `signed_in` 时主动调用 `identity.refresh()` |
 | R2 | `IdentityContext` 类型放 `packages/shared/openbuddy-types/src/identity.ts`，`runtime-core` 和 `identity` 都从这里导入 |
-| R3 | Pi 分支修改 `packages/runtime/openbuddy-runtime-adapter/src/types.ts` 的 `CallOptions`，加 `identityContext?: IdentityContext` |
+| R3 | Pi 分支扩展 `agentHost.prompt` options（Round 3 修正：目标为 `pi-runtime-factories.ts` 的 `PromptOptions`，不是 `openbuddy-runtime-adapter` 的 `CallOptions`） |
 | R4 | Hermes 分支 `PromptDispatch` 和 `dispatch-prompt.ts` 同步扩展，`prompt-cycle.ts` 从 `IdentityService` 获取 context 后传入 |
 | R5 | 侧栏 tenant 显示通过扩展 `BackendAuthView` 加 `tenant` 字段，不新增 IPC 调用 |
 | R6 | 审计字段对齐现有 `auditRecord({ event, outcome, detail })` 形状 |
 | R7 | 手动刷新按钮补充 disabled/loading/result 状态到 REQ-IDC-004 |
 
-**Verdict after Round 1**: pass
+2026-10-13 Review Round 3（批准前代码核对）：
+
+| ID | 决定 |
+| --- | --- |
+| R3 修正 | `agentHost.prompt` 实际签名在 `electron/main/agent/host-modules/pi-runtime-factories.ts`（options 为 `any`），`openbuddy-runtime-adapter/src/types.ts` 的 `CallOptions` 与 Pi host 无关；修正 REQ-IDC-003 与 §15 目标文件 |
+| 其余 | R1/R2/R4/R5/R6/R7 与代码核对无误 |
+
+**Verdict after Round 3**: pass

@@ -32,6 +32,7 @@ export interface CasdoorAuditEvent {
   code?: string;
   provider?: string;
   target?: string;
+  detail?: string;
 }
 
 function auditPath(): string {
@@ -85,6 +86,7 @@ function sanitizeEvent(event: Omit<CasdoorAuditEvent, "id" | "at">): Omit<Casdoo
     ...(sanitize(event.code, 80) ? { code: sanitize(event.code, 80) } : {}),
     ...(sanitize(event.provider, 80) ? { provider: sanitize(event.provider, 80) } : {}),
     ...(sanitize(event.target, 200) ? { target: sanitize(event.target, 200) } : {}),
+    ...(sanitize(event.detail, 500) ? { detail: sanitize(event.detail, 500) } : {}),
   };
 }
 

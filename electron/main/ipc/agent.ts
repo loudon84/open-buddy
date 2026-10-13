@@ -76,6 +76,7 @@ import { ipcMain, type BrowserWindow } from "electron";
 
 import { agentHost, ensureAgentHostLoaded } from "./agent-host-proxy";
 import { casdoorAuth } from "../casdoor/casdoor-auth";
+import { identity } from "../identity/identity-service";
 // Per-capability IPC modules. Each owns a self-contained subset of
 // the handlers that used to live in this file's giant
 // registerAgentIpc() body.
@@ -113,6 +114,7 @@ export function registerAgentIpc(getWindow: () => BrowserWindow | null): void {
     casdoorAuth,
     ensureAgentHost,
     getWindow,
+    getIdentityContext: () => identity.contextForPrompt(),
   };
 
   registerPresetIpc(sharedDeps);

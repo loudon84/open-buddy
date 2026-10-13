@@ -8,6 +8,8 @@ export type BackendAuthView = {
   mustChangePassword: boolean;
   phase: "idle" | "waiting_browser" | "exchanging";
   error?: string;
+  tenant?: { id: string; name: string };
+  identityStale?: boolean;
 };
 
 export function backendAuthStatus(): Promise<BackendAuthView> {
@@ -43,4 +45,12 @@ export function portalNotices(view: Pick<BackendAuthView, "needsOrgSetup" | "mus
   if (view.needsOrgSetup) lines.push(ORG_SETUP_NOTICE);
   if (view.mustChangePassword) lines.push(PASSWORD_NOTICE);
   return lines;
+}
+
+/** Sidebar subtitle: tenant name, with a warning mark when the identity cache is stale. */
+export function backendAccountNotice(view: BackendAuthView | null | undefined): string | undefined {
+  if (!view || view.status !== "signed_in") return undefined;
+  const tenant = view.tenant?.name ? `${view.identityStale ? "⚠ " : ""}${view.tenant.name}` : "";
+  const text = [tenant, portalNotices(view).join("")].filter(Boolean).join(" ");
+  return text || undefined;
 }

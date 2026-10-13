@@ -206,7 +206,7 @@ describe("R16 左下角账户菜单", () => {
     renderSidebar({
       accountStatus: "signed_in",
       accountLabel: "ada@example.com",
-      accountNotice: "请到业务门户完成组织设置。",
+      accountNotice: "ACME 请到业务门户完成组织设置。",
       onOpenSettings,
       onLogout,
     });
@@ -216,6 +216,7 @@ describe("R16 左下角账户菜单", () => {
       (el) => el.textContent?.trim(),
     );
     expect(items).toEqual(["退出登录", "打开设置"]);
+    expect(document.querySelector(".sidebar__account-menu-sub")?.textContent).toContain("ACME");
     expect(document.querySelector(".sidebar__account-menu-sub")?.textContent).toContain("请到业务门户完成组织设置。");
     expect(document.querySelector(".sidebar__account-menu-name")?.textContent?.trim()).toBe(
       "ada@example.com",

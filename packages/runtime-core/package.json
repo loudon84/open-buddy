@@ -6,6 +6,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@openbuddy/shared-types": "workspace:*"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json"
   }

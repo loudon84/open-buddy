@@ -1,9 +1,10 @@
-import type { RuntimeResponse } from "../../../packages/runtime-core/src/index";
+import type { IdentityContext, RuntimeResponse } from "../../../packages/runtime-core/src/index";
 
 export interface PromptDispatch {
   activeRuntimeId: string;
   text: string;
   sessionId?: string;
+  identityContext?: IdentityContext;
   promptPi: () => Promise<void>;
   chatActive: () => Promise<RuntimeResponse>;
   publishAssistant: (turn: { sessionId: string; text: string; traceId: string }) => void;

@@ -35,6 +35,7 @@ import { ChatView } from "@openbuddy/ui-conversation";
 import { EmailAiStyles } from "@openbuddy/ui-email/ai";
 import { PlaceholderPage } from "@/components/shared/PlaceholderPage";
 import { EXPERTS_ROUTE_LABEL } from "@/lib/navigation/placeholder-routes";
+import { backendAccountNotice } from "@/lib/backend-auth/backend-auth-client";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toast } from "@openbuddy/ui-primitives";
 import { Resizable } from "@openbuddy/ui-primitives";
@@ -525,9 +526,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
             onOpenSettingsSection={(section: string) => openSettings(section as SettingsSection)}
             accountLabel={backendSession?.status === "signed_in" ? backendSession.displayName : undefined}
             accountStatus={backendSession?.status === "signed_in" ? "signed_in" : backendSession?.status === "error" ? "error" : "signed_out"}
-            accountNotice={backendSession?.status === "signed_in"
-              ? [backendSession.needsOrgSetup ? "请到业务门户完成组织设置。" : "", backendSession.mustChangePassword ? "请到业务门户修改密码。" : ""].filter(Boolean).join("")
-              : undefined}
+            accountNotice={backendAccountNotice(backendSession)}
             onOpenAccount={openAccountSettings}
             onLogin={handleLogin}
             onLogout={handleLogout}
