@@ -30,6 +30,10 @@ export function backendAuthLogout(): Promise<BackendAuthView> {
   return invoke("backend-auth:logout");
 }
 
+export function backendAuthTestConnection(origin: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  return invoke("backend-auth:test-connection", origin);
+}
+
 export const ORG_SETUP_NOTICE = "请到业务门户完成组织设置。";
 export const PASSWORD_NOTICE = "请到业务门户修改密码。";
 

@@ -1,11 +1,14 @@
 import { createServer } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { BackendAuthService, type BackendAuthDeps } from "./backend-auth-service";
+import { shell } from "electron";
+import { BackendAuthService, DEFAULT_BACKEND_ORIGIN, type BackendAuthDeps } from "./backend-auth-service";
 
 vi.mock("electron", () => ({
   app: { getPath: () => "/tmp/openbuddy-backend-auth-test" },
   safeStorage: { isEncryptionAvailable: () => true, encryptString: (value: string) => Buffer.from(value), decryptString: (value: Buffer) => value.toString() },
   shell: { openExternal: vi.fn() },
+  session: { fromPartition: () => ({ clearStorageData: async () => undefined }) },
+  BrowserWindow: class {},
 }));
 
 type Memory = { origin: string; cipher: string | null };
@@ -41,6 +44,8 @@ function service(store: Memory, extra: BackendAuthDeps = {}): BackendAuthService
     saveOriginValue: (origin) => { store.origin = origin; },
     loadCipher: () => store.cipher,
     saveCipher: (cipher) => { store.cipher = cipher; },
+    clearOAuthPartition: async () => undefined,
+    openAuthWindow: async () => undefined,
     ...extra,
   });
 }
@@ -124,6 +129,36 @@ describe("BackendAuthService session", () => {
   });
 });
 
+describe("BackendAuthService origin default", () => {
+  it("writes the enterprise default only when the config document is missing", async () => {
+    let stored: string | undefined;
+    const auth = new BackendAuthService({
+      loadOrigin: () => stored,
+      saveOriginValue: (origin) => { stored = origin; },
+      encryptionAvailable: () => true,
+    });
+    const view = await auth.init();
+    expect(stored).toBe(DEFAULT_BACKEND_ORIGIN);
+    expect(view.origin).toBe(DEFAULT_BACKEND_ORIGIN);
+
+    const empty = new BackendAuthService({
+      loadOrigin: () => "",
+      saveOriginValue: () => { throw new Error("explicit empty must not be rewritten"); },
+    });
+    expect((await empty.init()).origin).toBe("");
+  });
+
+  it("keeps an explicit empty origin across a later init", async () => {
+    const store = memory();
+    const auth = service(store);
+    expect(await auth.saveOrigin("")).toEqual({ ok: true, origin: "" });
+    expect(store.origin).toBe("");
+    const again = service(store);
+    expect((await again.init()).origin).toBe("");
+    expect(store.origin).toBe("");
+  });
+});
+
 describe("BackendAuthService login round", () => {
   it("exchanges a lone code and ignores a late response after cancel", async () => {
     let release: (value: Response) => void = () => undefined;
@@ -137,7 +172,7 @@ describe("BackendAuthService login round", () => {
         if (String(input).endsWith("/exchange")) return gate;
         return fetch(input, init);
       },
-      openExternal: async (url) => { opened.push(url); },
+      openAuthWindow: async ({ url }) => { opened.push(url); },
     });
     await auth.saveOrigin(backend.origin);
     const started = await auth.login();
@@ -161,7 +196,7 @@ describe("BackendAuthService login round", () => {
     const urls: string[] = [];
     const store = memory();
     const auth = service(store, {
-      openExternal: async (url) => { urls.push(url); },
+      openAuthWindow: async ({ url }) => { urls.push(url); },
       fetchImpl: async (input, init) => {
         posts.push(String(input));
         return fetch(input, init);
@@ -182,15 +217,107 @@ describe("BackendAuthService login round", () => {
     await locked.saveOrigin("https://id.example");
     expect(await locked.login()).toEqual({ ok: false, error: "系统加密不可用，无法登录。" });
 
-    const browser = service(store, { openExternal: async () => { throw new Error("no browser"); } });
+    const browser = service(store, { openAuthWindow: async () => { throw new Error("no window"); } });
     await browser.saveOrigin("https://id.example");
-    expect(await browser.login()).toEqual({ ok: false, error: "无法打开系统浏览器。" });
+    expect(await browser.login()).toEqual({ ok: false, error: "无法打开授权窗口。" });
 
     const urls: string[] = [];
-    const slow = service(store, { roundTimeoutMs: 20, openExternal: async (url) => { urls.push(url); } });
+    const slow = service(store, { roundTimeoutMs: 20, openAuthWindow: async ({ url }) => { urls.push(url); } });
     await slow.saveOrigin("https://id.example");
     await slow.login();
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(slow.status().error).toBe("登录已超时，请重新登录。");
+  });
+
+  it("does not open the system browser, and closing after the callback does not cancel the round", async () => {
+    let release: (value: Response) => void = () => undefined;
+    const gate = new Promise<Response>((resolve) => { release = resolve; });
+    const store = memory();
+    let closeHook: (() => void) | undefined;
+    const auth = service(store, {
+      fetchImpl: (input, init) => {
+        if (String(input).endsWith("/exchange")) return gate;
+        return fetch(input, init);
+      },
+      openAuthWindow: async ({ url, onConsumed, onClosedBeforeConsume }) => {
+        closeHook = onClosedBeforeConsume;
+        onConsumed(new URL(`${new URL(url).searchParams.get("return_to")}?code=once`));
+      },
+    });
+    await auth.saveOrigin("https://id.example");
+    expect(await auth.login()).toEqual({ ok: true });
+    expect(shell.openExternal).not.toHaveBeenCalled();
+    expect(auth.status().phase).toBe("exchanging");
+    closeHook?.();
+    release(new Response(JSON.stringify({ data: { access_token: "a", refresh_token: "r", expires_in: 3600, user: { name: "Ada", must_change_password: false } } }), { status: 200 }));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(auth.status().status).toBe("signed_in");
+  });
+
+  it("cancels the round when the auth window closes before the callback is consumed", async () => {
+    const store = memory();
+    let closeHook: (() => void) | undefined;
+    const auth = service(store, {
+      openAuthWindow: async ({ onClosedBeforeConsume }) => { closeHook = onClosedBeforeConsume; },
+    });
+    await auth.saveOrigin("https://id.example");
+    await auth.login();
+    closeHook?.();
+    expect(auth.status().phase).toBe("idle");
+    expect(auth.status().status).toBe("signed_out");
+  });
+});
+
+describe("BackendAuthService partition and probe", () => {
+  it("clears the oauth partition on logout and origin change, but not when refresh fails", async () => {
+    const clears: string[] = [];
+    const backend = await fakeBackend(() => ({ status: 400, json: { message: "登录已失效，请重新发起登录" } }));
+    closers.push(backend.close);
+    const store = memory();
+    store.origin = backend.origin;
+    store.cipher = JSON.stringify({
+      accessToken: "tok", refreshToken: "r1", expiresAt: Date.now() + 86_400_000, needsOrgSetup: false, user: { name: "Ada", mustChangePassword: false },
+    });
+    const auth = service(store, {
+      fetchImpl: fetch,
+      clearOAuthPartition: async () => { clears.push("clear"); },
+    });
+    await auth.init();
+    expect(clears).toEqual([]);
+    await auth.logout();
+    expect(clears).toEqual(["clear"]);
+    await auth.saveOrigin("https://id.example");
+    expect(clears).toEqual(["clear", "clear"]);
+    await auth.saveOrigin("https://id.example");
+    expect(clears).toEqual(["clear", "clear"]);
+  });
+
+  it("probes the login endpoint without following redirects", async () => {
+    const hits: string[] = [];
+    const auth = service(memory(), {
+      fetchImpl: async (input, init) => {
+        hits.push(String(input));
+        expect(init?.redirect).toBe("manual");
+        return new Response(null, { status: 302 });
+      },
+    });
+    expect(await auth.testConnection("https://id.example")).toEqual({ ok: true });
+    expect(hits[0]).toContain("/api/v1/auth/casdoor/login?return_to=");
+    expect(await auth.testConnection("http://8.8.8.8/api")).toEqual({ ok: false, error: "根地址无效" });
+    expect(hits).toHaveLength(1);
+  });
+
+  it("reports a failed probe for a client error and a timeout", async () => {
+    const auth = service(memory(), {
+      fetchImpl: async () => new Response(null, { status: 404 }),
+    });
+    expect(await auth.testConnection("https://id.example")).toEqual({ ok: false, error: "连接失败" });
+    const slow = service(memory(), {
+      testConnectionTimeoutMs: 20,
+      fetchImpl: (_input, init) => new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      }),
+    });
+    expect(await slow.testConnection("https://id.example")).toEqual({ ok: false, error: "连接失败" });
   });
 });

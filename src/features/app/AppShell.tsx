@@ -100,9 +100,6 @@ const AboutDialog = lazy(() =>
 const FolderTrustDialog = lazy(() =>
   import("@openbuddy/ui-dialogs").then((m) => ({ default: m.FolderTrustDialog })),
 );
-const BackendSignInDialog = lazy(() =>
-  import("@openbuddy/ui-dialogs").then((m) => ({ default: m.BackendSignInDialog })),
-);
 const TasksPanel = lazy(() =>
   import("@openbuddy/ui-automation").then((m) => ({ default: m.TasksPanel })),
 );
@@ -240,12 +237,6 @@ function AboutSurface(props: React.ComponentProps<typeof AboutDialog>) {
 /** 目录信任对话框：内核 `overlay.folder-trust` slot 优先。 */
 function TrustSurface(props: React.ComponentProps<typeof FolderTrustDialog>) {
   const Component = useSlotComponent("overlay.folder-trust", FolderTrustDialog);
-  return <Component {...props} />;
-}
-
-/** 登录对话框：内核 `overlay.sign-in` slot 优先。 */
-function SignInSurface(props: React.ComponentProps<typeof BackendSignInDialog>) {
-  const Component = useSlotComponent("overlay.sign-in", BackendSignInDialog);
   return <Component {...props} />;
 }
 
@@ -464,10 +455,6 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
     trustRequest,
     placeholderView,
     feedbackOpen,
-    signInOpen,
-    setSignInOpen,
-    setBackendSession,
-    openSignIn,
     dataDirOpen,
     setSettingsOpen,
     setSearchOpen,
@@ -489,6 +476,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
     handleToggleWorkspace,
     openSettings,
     openAccountSettings,
+    handleLogin,
     handleLogout,
     showToast,
     handlePlaceholder,
@@ -541,7 +529,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
               ? [backendSession.needsOrgSetup ? "请到业务门户完成组织设置。" : "", backendSession.mustChangePassword ? "请到业务门户修改密码。" : ""].filter(Boolean).join("")
               : undefined}
             onOpenAccount={openAccountSettings}
-            onLogin={openSignIn}
+            onLogin={handleLogin}
             onLogout={handleLogout}
             onOpenFeedback={() => setFeedbackOpen(true)}
             onToggleCollapse={() => setSidebarCollapsed(true)}
@@ -627,14 +615,6 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
         <TrustSurface
           request={trustRequest}
           onResolve={() => setTrustRequest(null)}
-          onToast={showToast}
-        />
-        {/* R48 — 登录对话框:左下角账户菜单「登录」的落地面板,基于 Casdoor。
-            登录成功后把身份写回 runtime,侧栏账户区立即显示已登录态。 */}
-        <SignInSurface
-          open={signInOpen}
-          onClose={() => setSignInOpen(false)}
-          onSessionChange={setBackendSession}
           onToast={showToast}
         />
         {/* R93 — 专家页(智能体域)不展示运行中任务的删除入口:任务调度属于

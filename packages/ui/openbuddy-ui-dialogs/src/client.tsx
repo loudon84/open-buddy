@@ -17,7 +17,6 @@
  */
 import type { UiRuntimeContext } from "@openbuddy/ui-slots";
 import { AboutDialog } from "./AboutDialog";
-import { BackendSignInDialog } from "./BackendSignInDialog";
 import { FolderTrustDialog } from "./FolderTrustDialog";
 
 export function apply(ctx: UiRuntimeContext): () => void {
@@ -33,19 +32,6 @@ export function apply(ctx: UiRuntimeContext): () => void {
     ctx.slots.register(
       { name: "overlay.about", kind: "single", scope: "root", registrant: "@openbuddy/ui-dialogs/about" },
       AboutDialog as never
-    )
-  );
-
-  disposers.push(
-    ctx.slots.register(
-      { name: "shell.overlay", kind: "list", scope: "root", id: "sign-in", registrant: "@openbuddy/ui-dialogs/sign-in" },
-      BackendSignInDialog as never
-    )
-  );
-  disposers.push(
-    ctx.slots.register(
-      { name: "overlay.sign-in", kind: "single", scope: "root", registrant: "@openbuddy/ui-dialogs/sign-in" },
-      BackendSignInDialog as never
     )
   );
 

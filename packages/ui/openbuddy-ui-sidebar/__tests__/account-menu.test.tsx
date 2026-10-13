@@ -129,8 +129,7 @@ describe("R16 左下角账户菜单", () => {
     const primary = document.querySelector(".sidebar__account-menu-item--primary") as HTMLElement;
     expect(primary?.textContent?.trim()).toBe("登录");
     fireEvent.click(primary);
-    // R48 — 登录入口优先走 onLogin(打开 overlay.sign-in 对话框),
-    //   再回落到 onOpenAccount,而不是把人送去设置表单。
+    // 登录入口走 onLogin（有地址时直接授权，无地址时由宿主打开企业登录设置）。
     expect(onLogin).toHaveBeenCalledTimes(1);
     expect(onOpenAccount).not.toHaveBeenCalled();
     // 点击后菜单关闭

@@ -42,9 +42,8 @@ import { newSessionFlow, composeDiscoverBody } from "@/lib/agent/new-session-flo
 import { abandonInFlightStream } from "@/lib/agent/abandon-stream";
 import { listenSafe, isElectronBridgeUnavailable, getElectronBridgeStatus } from "@/lib/platform/electron-api";
 import { friendlyError } from "@/lib/platform/error-format";
-// R48 — 登录编排整体搬进 `overlay.sign-in` 对话框(CasdoorSignInDialog),
-//   宿主只保留状态入口(casdoorStatus / casdoorLogout)与身份视图类型。
-import { backendAuthLogout, backendAuthStatus, type BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
+import { backendAuthLogin, backendAuthLogout, backendAuthStatus, type BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
+import { startEnterpriseLogin } from "./start-enterprise-login";
 import { auditRecord } from "@/lib/audit/audit-client";
 import type { CasdoorLifecycleEvent } from "@openbuddy/auth-casdoor";
 import { getRendererPluginRuntime } from "@/lib/runtime/renderer-plugin-runtime";
@@ -116,9 +115,7 @@ export function useAppShellRuntime(): AppShellRuntime {
   // R23 — 「发送反馈」卡是否打开。触发点在左下角账户菜单(ui-sidebar),
   // 状态留在宿主:UI 包只负责"画一个入口",不持有时序策略。
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  // R48 — 「登录」对话框(Casdoor)。左下角账户菜单的登录入口打开它,而不是
-  //   直接调 casdoorLogin —— 未配置时入口会先弹一句用户无法处置的错误。
-  const [signInOpen, setSignInOpen] = useState(false);
+  const lastLoginToast = useRef<string | null>(null);
   // R23 — 数据目录选择器(设置 → 数据管理 → 更改数据目录)。
   const [dataDirOpen, setDataDirOpen] = useState(false);
   const [trustRequest, setTrustRequest] = useState<{ cwd?: string; reason?: string } | null>(null);
@@ -253,12 +250,19 @@ export function useAppShellRuntime(): AppShellRuntime {
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void listenSafe<BackendAuthView>("backend-auth://status", (event) => {
-      if (!disposed) setBackendSession(event.payload);
+      if (disposed) return;
+      setBackendSession(event.payload);
+      const message = event.payload.error;
+      if (message && message !== lastLoginToast.current) {
+        lastLoginToast.current = message;
+        setToast(message);
+      }
+      if (!message) lastLoginToast.current = null;
     }, () => notifyBridgeUnavailable()).then((cleanup) => {
       if (disposed) cleanup?.(); else unlisten = cleanup ?? undefined;
     });
     return () => { disposed = true; unlisten?.(); };
-  }, [notifyBridgeUnavailable]);
+  }, [notifyBridgeUnavailable, setToast]);
 
   useEffect(() => {
     let disposed = false;
@@ -525,41 +529,27 @@ export function useAppShellRuntime(): AppShellRuntime {
     }).catch(() => undefined);
   }, []);
 
-  // R15 恢复的历史语义(见 git show 536dc0e):左下角同时提供登录与设置两条
-  //   路径。R48 把"登录"拆成独立的 `overlay.sign-in` 对话框(点一下必弹出),
-  //   `openAccountSettings` 回归它名字本身 —— 打开「设置 → 账户管理」,
-  //   顺带刷新一次 Casdoor 状态(租户 / 成员 / 权限治理都在那一页)。
   const openAccountSettings = useCallback(() => {
     setSettingsSection("account");
     setSettingsOpen(true);
     void backendAuthStatus().then(setBackendSession).catch(() => setBackendSession(null));
   }, []);
 
-  // R48 — 「登录」入口统一走 Casdoor 登录对话框(overlay.sign-in)。
-  //   为什么不再直接 casdoorLogin:未配置企业身份时主进程必然返回一句
-  //   用户当场无法处置的错误,而"点登录什么都没弹出"体验上等于入口坏了。
-  //   对话框把「补配置 → 发起授权 → 等回调」收在同一个面板里,登录这件事
-  //   从"跳去设置"变成"点一下就有反馈"。底层编排仍是 Casdoor,没有第二套
-  //   身份后端(见 git 536dc0e / R15 的历史实现)。
-  const openSignIn = useCallback(() => {
-    setSignInOpen(true);
-  }, []);
-
-  // R15 — 左下角账户菜单触发的 casdoor 流程。
-  // 登录:打开 Casdoor 浏览器窗口(主进程通过 IPC 触发),错误以 toast 反馈。
-  // 登出:直接调 casdoorLogout,清掉本地 casdoorSession,后续 IPC 监听器
-  //     会接住 casdoor://lifecycle 事件并自动 reset 会话列表。
-  // R48 — 侧栏「登录」按钮:打开 Casdoor 登录对话框。真正的 casdoorLogin
-  //   调用与审计记录都发生在对话框里(失败也留在框内展示,不再是一条
-  //   一闪而过的 toast)。
   const handleLogin = useCallback(() => {
-    setSignInOpen(true);
-    void auditRecord({
-      event: "casdoor.login",
-      outcome: "info",
-      subject: "sign-in-dialog",
-    }).catch(() => undefined);
-  }, []);
+    void (async () => {
+      const view = await backendAuthStatus().catch(() => null);
+      await startEnterpriseLogin({
+        origin: view?.origin ?? "",
+        login: backendAuthLogin,
+        openEnterpriseSettings: () => openSettings("enterprise-login"),
+        toast: (message) => {
+          if (lastLoginToast.current === message) return;
+          lastLoginToast.current = message;
+          setToast(message);
+        },
+      });
+    })();
+  }, [openSettings, setToast]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -883,7 +873,7 @@ export function useAppShellRuntime(): AppShellRuntime {
     setSettingsOpen, setShortcutsOpen, setSearchOpen, setAboutOpen, setTrustRequest, setPlaceholderView,
     setSettingsSection,
     feedbackOpen, setFeedbackOpen,
-    signInOpen, setSignInOpen, openSignIn, setBackendSession,
+    setBackendSession,
     dataDirOpen, setDataDirOpen,
     sidebarCollapsed, setSidebarCollapsed,
     currentModelId, setCurrentModelId, models, workspaces, switchingWorkspace,

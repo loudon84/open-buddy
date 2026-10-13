@@ -1,9 +1,13 @@
-import { app, safeStorage, shell } from "electron";
+import { app, safeStorage, type BrowserWindow } from "electron";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { join } from "node:path";
 import { openStorageSync, SettingsDocumentStore } from "@openbuddy/storage";
 import { loginErrorText } from "./error-copy";
+import { clearEnterpriseOAuthPartition, openEnterpriseOAuthWindow, type OpenAuthWindowInput } from "./oauth-window";
 import { parseBackendOrigin } from "./origin-policy";
+
+export const DEFAULT_BACKEND_ORIGIN = "http://192.168.102.247:4510";
+const TEST_CONNECTION_TIMEOUT_MS = 5_000;
 
 const CONFIG_NAMESPACE = "backend-auth:config";
 const SESSION_NAMESPACE = "backend-auth:session";
@@ -38,13 +42,17 @@ type Listener = { port: number; close(): void };
 
 export type BackendAuthDeps = {
   fetchImpl?: typeof fetch;
-  openExternal?: (url: string) => Promise<void>;
+  openAuthWindow?: (input: OpenAuthWindowInput) => Promise<{ close(): void } | void>;
+  clearOAuthPartition?: () => Promise<void>;
+  getParentWindow?: () => BrowserWindow | null;
   now?: () => number;
   roundTimeoutMs?: number;
+  testConnectionTimeoutMs?: number;
   encryptionAvailable?: () => boolean;
   encrypt?: (plain: string) => string;
   decrypt?: (cipher: string) => string;
-  loadOrigin?: () => string;
+  /** `undefined` means the config document has never been written. */
+  loadOrigin?: () => string | undefined;
   saveOriginValue?: (origin: string) => void;
   loadCipher?: () => string | null;
   saveCipher?: (cipher: string | null) => void;
@@ -84,14 +92,13 @@ function store(): SettingsDocumentStore {
   return settingsStore;
 }
 
-function readOriginFromStore(): string {
+function readOriginFromStore(): string | undefined {
   const stored = store().get(CONFIG_NAMESPACE);
-  return stored && typeof stored.origin === "string" ? stored.origin : "";
+  return stored && typeof stored.origin === "string" ? stored.origin : undefined;
 }
 
 function writeOriginToStore(origin: string): void {
-  if (!origin) store().delete(CONFIG_NAMESPACE);
-  else store().set(CONFIG_NAMESPACE, { origin });
+  store().set(CONFIG_NAMESPACE, { origin });
 }
 
 function readCipherFromStore(): string | null {
@@ -114,6 +121,10 @@ export class BackendAuthService {
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private statusListener: StatusListener | null = null;
+  private authClose: (() => void) | null = null;
+  private callbackConsumed = false;
+  private suppressWindowCancel = false;
+  private getParentWindow: (() => BrowserWindow | null) | null = null;
   /** True while startup refresh has not finished. The sidebar stays signed out. */
   private hold = false;
 
@@ -121,6 +132,10 @@ export class BackendAuthService {
 
   setStatusListener(listener: StatusListener | null): void {
     this.statusListener = listener;
+  }
+
+  setParentWindow(getWindow: () => BrowserWindow | null): void {
+    this.getParentWindow = getWindow;
   }
 
   status(): BackendAuthView {
@@ -137,7 +152,13 @@ export class BackendAuthService {
   }
 
   async init(): Promise<BackendAuthView> {
-    this.origin = (this.deps.loadOrigin ?? readOriginFromStore)();
+    const loaded = (this.deps.loadOrigin ?? readOriginFromStore)();
+    if (loaded === undefined) {
+      this.origin = DEFAULT_BACKEND_ORIGIN;
+      (this.deps.saveOriginValue ?? writeOriginToStore)(this.origin);
+    } else {
+      this.origin = loaded;
+    }
     const cipher = (this.deps.loadCipher ?? readCipherFromStore)();
     this.session = cipher ? this.decodeSession(cipher) : null;
     this.error = undefined;
@@ -162,6 +183,23 @@ export class BackendAuthService {
     return { ok: true, origin: parsed.origin };
   }
 
+  async testConnection(input: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const parsed = parseBackendOrigin(input.trim());
+    if (!parsed.ok) return { ok: false, error: "根地址无效" };
+    const url = `${parsed.origin}/api/v1/auth/casdoor/login?return_to=${encodeURIComponent("http://127.0.0.1/callback")}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.deps.testConnectionTimeoutMs ?? TEST_CONNECTION_TIMEOUT_MS);
+    try {
+      const response = await this.fetchImpl(url, { method: "GET", redirect: "manual", signal: controller.signal });
+      if (response.status >= 200 && response.status < 400) return { ok: true };
+      return { ok: false, error: "连接失败" };
+    } catch {
+      return { ok: false, error: "连接失败" };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async login(): Promise<{ ok: true } | { ok: false; error: string }> {
     if (!(this.deps.encryptionAvailable ?? (() => safeStorage.isEncryptionAvailable()))()) {
       return this.fail("系统加密不可用，无法登录。");
@@ -180,6 +218,7 @@ export class BackendAuthService {
       return { ok: false, error: "登录未能开始，请重试。" };
     }
     this.listener = listener;
+    this.callbackConsumed = false;
     this.phase = "waiting_browser";
     this.error = undefined;
     this.armRoundTimer(round);
@@ -187,16 +226,34 @@ export class BackendAuthService {
     const returnTo = `http://127.0.0.1:${listener.port}/callback`;
     const url = `${this.origin}/api/v1/auth/casdoor/login?return_to=${encodeURIComponent(returnTo)}`;
     try {
-      await (this.deps.openExternal ?? ((target) => shell.openExternal(target)))(url);
+      const handle = await (this.deps.openAuthWindow ?? ((input) => openEnterpriseOAuthWindow(input)))({
+        url,
+        callbackPrefix: returnTo,
+        parent: (this.deps.getParentWindow ?? this.getParentWindow)?.() ?? null,
+        onConsumed: (callbackUrl) => {
+          this.callbackConsumed = true;
+          void this.onCallback(round, callbackUrl);
+        },
+        onClosedBeforeConsume: () => {
+          this.authClose = null;
+          if (this.suppressWindowCancel || this.callbackConsumed || this.round !== round) return;
+          this.cancel();
+        },
+      });
+      this.authClose = handle?.close ?? null;
     } catch {
-      this.abandon(round, "无法打开系统浏览器。");
-      return { ok: false, error: "无法打开系统浏览器。" };
+      this.abandon(round, "无法打开授权窗口。");
+      return { ok: false, error: "无法打开授权窗口。" };
     }
     return { ok: true };
   }
 
   cancel(): BackendAuthView {
     if (this.phase === "idle") return this.status();
+    this.suppressWindowCancel = true;
+    this.authClose?.();
+    this.authClose = null;
+    this.suppressWindowCancel = false;
     this.round += 1;
     this.closeListener();
     this.phase = "idle";
@@ -238,6 +295,7 @@ export class BackendAuthService {
     this.clearSession();
     this.phase = "idle";
     this.error = undefined;
+    await this.clearPartition();
     this.publish();
     return this.status();
   }
@@ -252,6 +310,7 @@ export class BackendAuthService {
     this.origin = next;
     this.error = undefined;
     (this.deps.saveOriginValue ?? writeOriginToStore)(next);
+    if (previous !== next) await this.clearPartition();
     this.publish();
   }
 
@@ -270,6 +329,7 @@ export class BackendAuthService {
 
   private async onCallback(round: number, url: URL): Promise<void> {
     if (this.round !== round) return;
+    this.callbackConsumed = true;
     this.closeListener();
     const error = url.searchParams.get("error");
     const code = url.searchParams.get("code");
@@ -369,6 +429,7 @@ export class BackendAuthService {
     if (!this.session) return;
     const delay = Math.max(MIN_REFRESH_DELAY_MS, this.session.expiresAt - this.now() - REFRESH_LEAD_MS);
     this.refreshTimer = setTimeout(() => { void this.refresh(); }, delay);
+    this.refreshTimer.unref?.();
   }
 
   private armRoundTimer(round: number): void {
@@ -376,6 +437,7 @@ export class BackendAuthService {
     this.roundTimer = setTimeout(() => {
       if (this.round === round) this.abandon(round, "登录已超时，请重新登录。");
     }, this.deps.roundTimeoutMs ?? DEFAULT_ROUND_MS);
+    this.roundTimer.unref?.();
   }
 
   private abandon(round: number, message: string): void {
@@ -391,6 +453,14 @@ export class BackendAuthService {
     this.phase = "idle";
     this.publish();
     return { ok: false, error: message };
+  }
+
+  private async clearPartition(): Promise<void> {
+    try {
+      await (this.deps.clearOAuthPartition ?? clearEnterpriseOAuthPartition)();
+    } catch {
+      // A missing partition must not block logout or an origin change.
+    }
   }
 
   private closeListener(): void {

@@ -1959,13 +1959,7 @@ export function Sidebar({
                         : "未登录 · 数据只保存在这台机器上"}
                     </div>
                   </div>
-                  {/* R48 — 登录入口恢复 git 历史(R15 / 536dc0e)的语义:点一下
-                      一定弹出登录流程。R26 把未配置时的主按钮改成「配置企业登录」
-                      并只把人送到设置表单,副作用是这个入口再也不叫"登录"、点完
-                      也没有任何反馈。现在改为打开 `overlay.sign-in`(Casdoor
-                      登录对话框):未配置时可在框内直接补 issuer / clientId 并
-                      立即登录,已配置时直接拉起 Casdoor 授权页。企业登录的编排
-                      仍完全基于 Casdoor,没有新增第二套身份后端。 */}
+                  {/* 登录入口走 onLogin：有企业地址时直接授权，没有地址时由宿主打开企业登录设置。 */}
                   {(onLogin || onOpenAccount) && (
                     <button
                       type="button"
