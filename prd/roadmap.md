@@ -2,6 +2,8 @@
 
 > 修订日期：2026-10-12。本文与21份PRD/设计文件和审查记录构成实施基线。本次只完成文档；没有实现产品功能、执行产品测试、安装依赖、发布或提交代码。
 
+> 架构北极星：[SMC-OE-AOS-001](OpenBuddy%20Enterprise%20Agent%20OS%20Phase-1%20Platform%20Engineering%20PRD%20v1.2.md) 管分层边界、Non-Goal 与治理原则；接口/契约细节以第 2 节列出的专项规范 REQ 与代码为准。分工冲突的仲裁规则见该 PRD「文档定位」。
+
 ## 1. 执行口径、证据与来源
 
 遵循[GUIDE](GUIDE-smc-copilot-Enterprise-Agent-OS-v1.0.md#REQ-GUIDE02)的Phase0–4；Phase4展开为4A–4E，共9个执行段、18个Milestone、18个Epic、55个Task。每段按依赖验收后退出，月份只是从启动时起的建议窗口。首期Desktop+Local Pi/Remote Hermes；年度外候选保留在总体PRD和D09，不能把它们当已交付。
