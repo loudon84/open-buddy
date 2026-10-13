@@ -30,4 +30,10 @@
 
 ## 处理记录
 
-- Round 1: 待处理（R1–R5 均未应用）
+- Round 1 (2026-10-13): R1–R5 全部应用。
+  - R1: PRD v1.2 新增 §14 需求溯源（条款 → 专项 REQ → Task → 证据），并登记 GAP-1~4；
+  - R2: PRD v1.2「文档定位」写入仲裁规则；roadmap.md 头部加入北极星引用，双向链接建立；
+  - R3: §3 remote_gateway 修正为已交付（P1-03）；§15 改为引用 ledger 实时状态；
+  - R4: §16 Acceptance 对齐 roadmap Phase 退出门槛 + ledger，不再另立判据；
+  - R5: 删除 `prd/new-sitemap/` 的 v1.0 遗留副本（无外部引用）。
+- **Verdict after Round 1**: pass（可执行性恢复：PRD 条款可经 §14 溯源到 Task 与证据）
