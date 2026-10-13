@@ -13,7 +13,7 @@ const base = {
 describe("HomePage", () => {
   it("渲染双行大标题", () => {
     render(<HomePage {...base} />);
-    expect(screen.getByText("OpenBuddy")).toBeInTheDocument();
+    expect(screen.getByText("SMC-Copilot")).toBeInTheDocument();
     expect(screen.getByText("你的职场超能力")).toBeInTheDocument();
   });
 

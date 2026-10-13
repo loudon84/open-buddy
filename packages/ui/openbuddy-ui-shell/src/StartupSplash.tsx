@@ -56,7 +56,7 @@ export function StartupSplash({ open, onComplete, durationMs = 2400 }: StartupSp
       <div className="startup-splash__content">
         <h1 className="startup-splash__brand">
           <span className="startup-splash__logo">●</span>
-          OpenBuddy
+          SMC-Copilot
         </h1>
         <div className="startup-splash__progress" aria-label={`启动进度 ${Math.round(progress)}%`}>
           <div className="startup-splash__progress-bar" style={{ width: `${progress}%` }} />

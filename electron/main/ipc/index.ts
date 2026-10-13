@@ -163,6 +163,7 @@ import { registerAuditIpc } from "./audit";
 import { registerDataDirIpc } from "./data-dir";
 import { registerAgentPathsIpc } from "./agent-paths";
 import { registerEnterpriseRuntimeIpc } from "./enterprise-runtime";
+import { registerPlatformRuntimeIpc } from "./platform-runtime";
 // R18 / Phase D — Expert Marketplace Bridge (Pi 扩展市场)
 import {
   createPiMarketBridge,
@@ -1138,6 +1139,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null): Promis
 
 	// Enterprise remote runtime (P1-06): off unless OPENBUDDY_ENTERPRISE_GATEWAY_URL is set.
 	registerEnterpriseRuntimeIpc(getWindow);
+	registerPlatformRuntimeIpc();
 
 	// Phase A.1 — pi-bridge IPC surface (pi text / image / skill helpers).
 	registerPiBridgeIpc();

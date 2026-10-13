@@ -125,6 +125,7 @@ import {
   type CasdoorUserSummary,
 } from "@/lib/casdoor/casdoor-client";
 import { useAgentPaths } from "@openbuddy/ui-shared/use-agent-paths";
+import { AgentRuntimeSection } from "./AgentRuntimeSection";
 import { listen } from "@/lib/platform/electron-api";
 import { confirm, invoke, save } from "@/lib/platform/electron-api";
 import { setToast } from "@/stores/toast-store";
@@ -2284,6 +2285,7 @@ export function AgentSettingsPanel() {
       title="智能体设置"
       desc="当前 pi 智能体的配置概览：已加载的技能、MCP 连接器和 slash 命令。数据来自 pi 的 x.ai/skills/config、x.ai/mcp/list、x.ai/commands/list。"
     >
+      <AgentRuntimeSection />
       <div className="settings-actions">
         <button className="settings-btn" onClick={reload} disabled={loading}>
           <RefreshCw size={14} /> {loading ? "加载中…" : "刷新"}

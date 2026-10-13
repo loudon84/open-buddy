@@ -53,6 +53,9 @@ import {
   stringValue,
   thinkingLevel,
 } from "./validation";
+import { dispatchPrompt } from "../runtime/dispatch-prompt";
+import { getPlatformRuntimeManager } from "../runtime/platform-runtime-handle";
+import { publishAssistantTurn } from "../runtime/publish-assistant-turn";
 import type { AgentHostIpcDeps } from "./_agent-host-deps";
 
 /**
@@ -90,13 +93,34 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
   const { agentHost, ensureAgentHost } = deps;
 
   ipcMain.handle("agent:prompt", async (_e, input: string | { sessionId?: string; text: string; traceId?: string }) => {
-    await ensureAgentHost();
     const payload = typeof input === "string" ? undefined : recordValue(input, "agent:prompt payload");
     const sessionId = payload?.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
-    const activeSessionId = agentHost.getSession()?.sessionId;
-    if (sessionId !== undefined && sessionId !== activeSessionId) throw new Error(`Pi session is not loaded: ${sessionId}`);
     const text = requiredString(typeof input === "string" ? input : payload?.text, "prompt");
     const traceId = optionalString((typeof input === "string" ? undefined : payload?.traceId), "traceId") ?? generateTraceId();
+    const platform = getPlatformRuntimeManager();
+    const activeRuntimeId = platform?.activeId ?? "pi";
+    if (activeRuntimeId !== "pi") {
+      if (!platform) throw new Error("platform runtime is not installed");
+      hostReceived("agent:prompt", traceId, sessionId);
+      try {
+        await dispatchPrompt({
+          activeRuntimeId,
+          text,
+          sessionId,
+          promptPi: async () => undefined,
+          chatActive: () => platform.chat({ text, sessionId }),
+          publishAssistant: publishAssistantTurn,
+        });
+        hostDispatched("agent:prompt", traceId, sessionId);
+        return { ok: true };
+      } catch (err) {
+        hostFailed("agent:prompt", traceId, err);
+        throw err;
+      }
+    }
+    await ensureAgentHost();
+    const activeSessionId = agentHost.getSession()?.sessionId;
+    if (sessionId !== undefined && sessionId !== activeSessionId) throw new Error(`Pi session is not loaded: ${sessionId}`);
     hostReceived("agent:prompt", traceId, sessionId);
     // A-5: register a per-request AbortController so agent:abort can
     // cancel the in-flight prompt. If an earlier prompt is still

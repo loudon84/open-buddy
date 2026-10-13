@@ -17,7 +17,7 @@ describe("TitleBar", () => {
 
   it("渲染品牌与三个菜单", () => {
     render(<TitleBar onPlaceholder={() => {}} />);
-    expect(screen.getByText("OpenBuddy")).toBeInTheDocument();
+    expect(screen.getByText("SMC-Copilot")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "编辑" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "窗口" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "帮助" })).toBeInTheDocument();
@@ -37,11 +37,11 @@ describe("TitleBar", () => {
     expect(screen.queryByText("粘贴")).not.toBeInTheDocument();
   });
 
-  it("帮助菜单的'关于 OpenBuddy'调用 onShowAbout", () => {
+  it("帮助菜单的'关于 SMC-Copilot'调用 onShowAbout", () => {
     const onShowAbout = vi.fn();
     render(<TitleBar onPlaceholder={() => {}} onShowAbout={onShowAbout} />);
     fireEvent.click(screen.getByRole("button", { name: "帮助" }));
-    fireEvent.click(screen.getByText("关于 OpenBuddy"));
+    fireEvent.click(screen.getByText("关于 SMC-Copilot"));
     expect(onShowAbout).toHaveBeenCalled();
   });
 

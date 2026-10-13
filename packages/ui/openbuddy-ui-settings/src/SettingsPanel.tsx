@@ -203,7 +203,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: HelpCircle,
     flat: true,
     items: [
-      { id: "help", label: "关于 OpenBuddy", icon: HelpCircle },
+      { id: "help", label: "关于 SMC-Copilot", icon: HelpCircle },
       { id: "microkernel", label: "系统信息", icon: Activity },
     ],
   },

@@ -25,7 +25,7 @@ const MENUS: Record<string, MenuItem[]> = {
     { label: "最大化", action: "maximize" },
     { label: "关闭", action: "close" },
   ],
-  帮助: [{ label: "关于 OpenBuddy", about: true }],
+  帮助: [{ label: "关于 SMC-Copilot", about: true }],
 };
 
 // 最小化图标
@@ -184,8 +184,8 @@ export function TitleBar({
         <button
           className="titlebar__brand"
           onClick={() => onShowAbout?.()}
-          aria-label="OpenBuddy"
-          title="关于 OpenBuddy"
+          aria-label="SMC-Copilot"
+          title="关于 SMC-Copilot"
         >
           <img
             src={logoMarkUrl}
@@ -194,7 +194,7 @@ export function TitleBar({
             height={18}
             className="titlebar__brand-logo"
           />
-          <span>OpenBuddy</span>
+          <span>SMC-Copilot</span>
         </button>
         {Object.keys(MENUS).map((name) => (
           <div key={name} className="titlebar__menu-wrap">

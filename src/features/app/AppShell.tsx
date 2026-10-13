@@ -578,7 +578,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
               sidebarCollapsed={sidebarCollapsed}
               onExpandSidebar={() => setSidebarCollapsed(false)}
               onNewSession={handleNewSession}
-              title="OpenBuddy"
+              title="SMC-Copilot"
               appVersion={APP_VERSION}
               onRename={async () => { /* 首页无会话,无需改名 */ }}
               sessionId={undefined}

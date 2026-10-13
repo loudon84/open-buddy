@@ -60,7 +60,7 @@ const mainFilename = fileURLToPath(import.meta.url);
 const mainDirname = dirname(mainFilename);
 const execFileAsync = promisify(execFile);
 
-app.setName("OpenBuddy");
+app.setName("SMC-Copilot");
 
 // R95 — 把 agent 根钉进 `PI_CODING_AGENT_DIR`,必须发生在**任何 pi 模块被求值之前**。
 //

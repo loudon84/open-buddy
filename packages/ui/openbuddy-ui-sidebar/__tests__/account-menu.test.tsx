@@ -173,7 +173,7 @@ describe("R16 左下角账户菜单", () => {
       renderSidebar({ accountStatus: status });
       expect(document.querySelector(".sidebar__user-sub")).toBeNull();
       expect(document.querySelector(".sidebar__user-chevron")).toBeNull();
-      expect(document.querySelector(".sidebar__user-name")?.textContent?.trim()).toBe("OpenBuddy");
+      expect(document.querySelector(".sidebar__user-name")?.textContent?.trim()).toBe("SMC-Copilot");
       // 状态改由圆点 + tooltip 表达,不再写一行小字。
       const dot = document.querySelector(".sidebar__user-dot");
       expect(dot?.getAttribute("data-state")).toBe(status);

@@ -1,0 +1,17 @@
+{
+  "name": "@openbuddy/runtime-adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@openbuddy/runtime-core": "workspace:*",
+    "@openbuddy/runtime-adapter": "workspace:*",
+    "@openbuddy/hermes-client": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

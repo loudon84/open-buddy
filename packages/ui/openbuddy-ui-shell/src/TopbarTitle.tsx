@@ -136,8 +136,8 @@ export function TopbarTitle({
       {appVersion && (
         <span
           className="main-topbar__version-pill"
-          title={`OpenBuddy 版本 ${appVersion}`}
-          aria-label={`OpenBuddy 版本 ${appVersion}`}
+          title={`SMC-Copilot 版本 ${appVersion}`}
+          aria-label={`SMC-Copilot 版本 ${appVersion}`}
         >
           v{appVersion}
         </span>

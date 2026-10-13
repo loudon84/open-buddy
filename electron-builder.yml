@@ -12,7 +12,7 @@
 # electron-vite; remaining dependencies are packaged from `node_modules/`.
 # ============================================================================
 appId: com.openbuddy.desktop
-productName: OpenBuddy
+productName: SMC-Copilot
 copyright: Copyright (c) 2026 OpenBuddy contributors
 
 protocols:

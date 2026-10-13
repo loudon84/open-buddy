@@ -56,7 +56,7 @@ export function AppStatusBar({ runtime }: { runtime: AppShellRuntime }) {
 
   const right: StatusItem[] = [
     { key: "theme", glyph: "🎨", label: themeSnap.currentName, title: `主题：${themeSnap.currentName}` },
-    { key: "version", glyph: "◆", label: `v${APP_VERSION}`, title: "OpenBuddy 版本" },
+    { key: "version", glyph: "◆", label: `v${APP_VERSION}`, title: "SMC-Copilot 版本" },
   ];
 
   // 内核 `shell.statusbar` slot 优先:插件注册同名单例槽即可整体替换状态栏,

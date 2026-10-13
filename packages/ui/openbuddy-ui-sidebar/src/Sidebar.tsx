@@ -1475,7 +1475,7 @@ export function Sidebar({
             ? pluginBrandName.map((entry) => (
               <RendererSlotView key={String(entry.options.id ?? entry.options.name)} entry={entry} className="sidebar__logo" />
             ))
-            : <span className="sidebar__logo">OpenBuddy</span>}
+            : <span className="sidebar__logo">SMC-Copilot</span>}
           <span className="sidebar__version">v{APP_VERSION}</span>
         </div>
         <div className="sidebar__logo-spacer" {...(IS_MACOS ? { "data-openbuddy-drag": true } : {})} />
@@ -1874,7 +1874,7 @@ export function Sidebar({
                 ? `${accountLabel} · 账户菜单`
                 : "OpenBuddy · 账户菜单"
             }
-            title={accountLabel ?? "OpenBuddy"}
+            title={accountLabel ?? "SMC-Copilot"}
             data-tip={
               accountStatus === "signed_in"
                 ? `${accountLabel ?? "已登录"} · 账户菜单`
@@ -1892,7 +1892,7 @@ export function Sidebar({
                 身份状态现在收进 tooltip(`data-tip`)与账户菜单头,不占版面。
                 登录 / 设置 / 反馈 三个入口仍然在点击后的账户菜单里。 */}
             <span className="sidebar__user-text">
-              <span className="sidebar__user-name">{accountLabel ?? "OpenBuddy"}</span>
+              <span className="sidebar__user-name">{accountLabel ?? "SMC-Copilot"}</span>
               {/* 状态圆点:只表达"是不是登录态",不写字、不占第二行。 */}
               <span
                 className="sidebar__user-dot"

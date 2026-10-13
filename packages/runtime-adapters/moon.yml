@@ -1,0 +1,12 @@
+language: typescript
+layer: library
+stack: backend
+
+tasks:
+  typecheck:
+    command: "pnpm exec tsc --noEmit -p tsconfig.json"
+    inputs:
+      - "src/**/*"
+      - "tsconfig.json"
+      - "package.json"
+    outputs: []

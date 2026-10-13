@@ -5,6 +5,8 @@ projects:
     - "apps/*/moon.yml"
     - "moon.yml"
     - "electron/moon.yml"
+    - "packages/runtime-core/moon.yml"
+    - "packages/runtime-adapters/moon.yml"
   sources:
     "openbuddy": "."
     "openbuddy-website": "apps/openbuddy-website"

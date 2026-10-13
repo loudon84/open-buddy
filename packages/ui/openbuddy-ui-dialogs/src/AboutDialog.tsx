@@ -56,13 +56,13 @@ export function AboutDialog({ open, onClose, init }: AboutDialogProps) {
         <div className="about-dialog__header">
           <img
             src={logoUrl}
-            alt="OpenBuddy"
+            alt="SMC-Copilot"
             className="about-dialog__logo"
             width={48}
             height={48}
           />
           <div>
-            <h2 className="about-dialog__title">OpenBuddy</h2>
+            <h2 className="about-dialog__title">SMC-Copilot</h2>
             <p className="about-dialog__subtitle">
               WorkBuddy 风格的 pi 桌面外壳
             </p>

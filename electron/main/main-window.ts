@@ -31,7 +31,7 @@ export function createMainWindow(opts: CreateMainWindowOptions): BrowserWindow {
     height: 800,
     minWidth: 960,
     minHeight: 600,
-    title: "OpenBuddy",
+    title: "SMC-Copilot",
     backgroundColor: "#f7f7f8",
     titleBarStyle: "hidden",
     titleBarOverlay:
