@@ -8,6 +8,8 @@ import type { CasdoorAiCapabilities, CasdoorCommercialModelCatalog, CasdoorCredi
 export interface CasdoorConfigView {
   issuer: string;
   clientId: string;
+  clientSecret?: string;
+  clientSecretConfigured?: boolean;
   redirectUri: string;
   scope: string;
   smsProviderHint: string;
@@ -49,7 +51,7 @@ return invoke<CasdoorSessionView>("casdoor:status");
 
 export type CasdoorWorkbenchSummary = Pick<CasdoorSessionView, "status" | "provider" | "expiresAt" | "error" | "tenantContext"> & {
   config: Pick<CasdoorConfigView, "configured" | "reason">;
-  identity: Pick<CasdoorIdentity, "subject" | "displayName" | "email" | "phone" | "organizations" | "roles" | "groups" | "permissions" | "capabilities" | "isAdmin" | "customFields"> | null;
+  identity: Pick<CasdoorIdentity, "subject" | "displayName" | "email" | "phone" | "organizations" | "roles" | "isAdmin"> | null;
 };
 
 export function casdoorWorkbenchSummary(): Promise<CasdoorWorkbenchSummary> {

@@ -785,7 +785,7 @@ export function AccountSettingsPanel() {
   const [busy, setBusy] = useState<"default" | "sms" | "wechat" | "refresh" | "logout" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [showCasdoorConfig, setShowCasdoorConfig] = useState(false);
-  const [casdoorDraft, setCasdoorDraft] = useState({ issuer: "", clientId: "", redirectUri: "", smsProviderHint: "", wechatProviderHint: "" });
+  const [casdoorDraft, setCasdoorDraft] = useState({ issuer: "", clientId: "", clientSecret: "", redirectUri: "", smsProviderHint: "", wechatProviderHint: "" });
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -812,7 +812,9 @@ export function AccountSettingsPanel() {
         setAiCapabilities(null);
         setCommercialCatalog(null);
       }
-      if (c) setCasdoorDraft({ issuer: c.config.issuer, clientId: c.config.clientId === "configured" ? "" : c.config.clientId, redirectUri: c.config.redirectUri, smsProviderHint: c.config.smsProviderHint, wechatProviderHint: c.config.wechatProviderHint });
+      if (c) setCasdoorDraft({ issuer: c.config.issuer, clientId: c.config.clientId === "configured" ? "" : c.config.clientId, clientSecret: "", redirectUri: c.config.redirectUri, smsProviderHint: c.config.smsProviderHint, wechatProviderHint: c.config.wechatProviderHint });
+      const reasons = [capabilities?.enterprise.reason, capabilities?.sms.reason, capabilities?.wechat.reason, c?.error, c?.config.reason].filter((item): item is string => Boolean(item));
+      if (c?.status !== "signed_in" && reasons.some((reason) => /redirect/i.test(reason))) setShowCasdoorConfig(true);
     } finally {
       setLoading(false);
     }
@@ -827,6 +829,12 @@ export function AccountSettingsPanel() {
   useEffect(() => {
     if (casdoor?.status === "configuration_needed") setShowCasdoorConfig(true);
   }, [casdoor?.status]);
+
+  useEffect(() => {
+    const openConfig = () => setShowCasdoorConfig(true);
+    window.addEventListener("openbuddy:casdoor-config", openConfig);
+    return () => window.removeEventListener("openbuddy:casdoor-config", openConfig);
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -1687,8 +1695,12 @@ export function AccountSettingsPanel() {
   const saveCasdoorConfig = useCallback(async () => {
     setMessage(null);
     try {
-      const { clientId, ...configPatch } = casdoorDraft;
-      await casdoorSaveConfig(clientId.trim() ? { ...configPatch, clientId: clientId.trim() } : configPatch);
+      const { clientId, clientSecret, ...configPatch } = casdoorDraft;
+      await casdoorSaveConfig({
+        ...configPatch,
+        ...(clientId.trim() ? { clientId: clientId.trim() } : {}),
+        ...(clientSecret.trim() ? { clientSecret: clientSecret.trim() } : {}),
+      });
       await reload();
       setShowCasdoorConfig(false);
       setMessage("Casdoor 配置已保存");
@@ -1738,31 +1750,31 @@ export function AccountSettingsPanel() {
                   <div className="settings-row__label"><span>{casdoorSummary.identity.displayName ?? casdoorSummary.identity.subject}</span><span className="settings-row__hint">{casdoorSummary.identity.email ?? casdoorSummary.identity.phone ?? "已登录"}</span></div>
                   <div className="settings-row__control"><code>{casdoor.provider ?? "Casdoor"}</code></div>
                 </div>
-                <p className="settings-hint">组织：{casdoorSummary.identity.organizations.length ? casdoorSummary.identity.organizations.join(", ") : "未声明"} · 角色：{casdoorSummary.identity.roles.length ? casdoorSummary.identity.roles.join(", ") : "无"}</p>
+                <p className="settings-hint">组织：{(casdoor.identity?.organizations ?? casdoorSummary.identity.organizations ?? []).length ? (casdoor.identity?.organizations ?? casdoorSummary.identity.organizations ?? []).join(", ") : "未声明"} · 角色：{(casdoor.identity?.roles ?? casdoorSummary.identity.roles ?? []).length ? (casdoor.identity?.roles ?? casdoorSummary.identity.roles ?? []).join(", ") : "无"}</p>
                 <div className="settings-row">
                   <div className="settings-row__label"><span>当前租户</span><span className="settings-row__hint">权限和管理操作均按当前租户隔离</span></div>
                   <div className="settings-row__control">
-                    <select value={casdoor.tenantContext.activeTenantId ?? ""} onChange={(event) => void selectTenant(event.target.value)} disabled={busy !== null || casdoor.tenantContext.availableTenantIds.length === 0}>
-                      {casdoor.tenantContext.availableTenantIds.length === 0 ? <option value="">无可用租户</option> : casdoor.tenantContext.availableTenantIds.map((tenantId) => <option key={tenantId} value={tenantId}>{tenantId}</option>)}
+                    <select value={casdoor.tenantContext.activeTenantId ?? ""} onChange={(event) => void selectTenant(event.target.value)} disabled={busy !== null || (casdoor.tenantContext.availableTenantIds ?? []).length === 0}>
+                      {(casdoor.tenantContext.availableTenantIds ?? []).length === 0 ? <option value="">无可用租户</option> : casdoor.tenantContext.availableTenantIds.map((tenantId) => <option key={tenantId} value={tenantId}>{tenantId}</option>)}
                     </select>
                   </div>
                 </div>
-                <p className="settings-hint">当前租户能力：{casdoor.tenantContext.membership?.capabilities.length ? casdoor.tenantContext.membership.capabilities.join(", ") : "默认拒绝"}</p>
+                <p className="settings-hint">当前租户能力：{casdoor.tenantContext.membership?.capabilities?.length ? casdoor.tenantContext.membership.capabilities.join(", ") : "默认拒绝"}</p>
                 <p className="settings-hint">租户计费方案：{casdoor.tenantContext.plan ? <><span className="settings-tag" data-testid="casdoor-tenant-plan">{casdoor.tenantContext.plan}</span>{Object.keys(casdoor.tenantContext.plansByTenantId ?? {}).length > 1 ? <span> · 可用方案 {Object.entries(casdoor.tenantContext.plansByTenantId ?? {}).map(([tid, p]) => `${tid}=${p}`).join(", ")}</span> : null}</> : "未配置（请在 Casdoor 后台 Organization → plan 字段设置 free / team / enterprise）"}</p>
                 {credits ? (
                   <div className="account-section" data-testid="casdoor-credit-account">
                     <h4>OpenBuddy 积分账户</h4>
                     <p className="settings-hint">余额：<strong>{credits.balance.toLocaleString()}</strong> 积分 · 可用：{credits.available.toLocaleString()} · 预扣：{credits.reserved.toLocaleString()} · 累计消费：{credits.lifetimeConsumed.toLocaleString()} · 已过期：{credits.lifetimeExpired.toLocaleString()}</p>
                     <p className="settings-hint">积分是 OpenBuddy 商业计费单位；Casdoor Token 只负责身份，New API Token 只负责模型网关，不互相替代。</p>
-                    {creditLedger.length > 0 ? <ul className="shortcuts-list">{creditLedger.slice(0, 8).map((entry) => <li key={entry.id} className="shortcuts-list__row"><span className="shortcuts-list__action">{entry.type} · {entry.amount.toLocaleString()} 积分</span><span className="shortcuts-list__key">{entry.model ?? "—"} · {new Date(entry.createdAt).toLocaleString()}{entry.expiresAt ? ` · 有效至 ${new Date(entry.expiresAt).toLocaleString()}` : ""}</span></li>)}</ul> : <p className="settings-hint">暂无积分流水。</p>}
+                    {(creditLedger ?? []).length > 0 ? <ul className="shortcuts-list">{creditLedger.slice(0, 8).map((entry) => <li key={entry.id} className="shortcuts-list__row"><span className="shortcuts-list__action">{entry.type} · {entry.amount.toLocaleString()} 积分</span><span className="shortcuts-list__key">{entry.model ?? "—"} · {new Date(entry.createdAt).toLocaleString()}{entry.expiresAt ? ` · 有效至 ${new Date(entry.expiresAt).toLocaleString()}` : ""}</span></li>)}</ul> : <p className="settings-hint">暂无积分流水。</p>}
                     {aiCapabilities && !("configured" in aiCapabilities) ? <p className="settings-hint" data-testid="casdoor-ai-capabilities">New API 能力目录：{aiCapabilities.models.length ? aiCapabilities.models.map((model) => `${model.id}（${Object.entries(model.capabilities).filter(([, capability]) => capability.supported).map(([protocol]) => protocol).join(", ") || "未声明"}）`).join("；") : "未返回模型"}</p> : null}
                     {commercialCatalog && !("configured" in commercialCatalog) ? <div data-testid="casdoor-commercial-model-catalog"><p className="settings-hint">商业模型目录（{commercialCatalog.group ?? "默认 Group"}）：{commercialCatalog.models.length ? commercialCatalog.models.map((model) => `${model.id}（${model.sellable ? "可售" : `不可售：${model.reason ?? "未通过门禁"}`}，${model.pricing.inputPointsPerThousand}/${model.pricing.outputPointsPerThousand} 积分/K token${model.grossMarginPercent === undefined ? "" : `，预计毛利 ${model.grossMarginPercent}%`}）`).join("；") : "未返回模型"}</p><p className="settings-hint">可售门禁：能力目录、Chat Completions、真实 usage、供应商成本基线、同币种付费套餐和目标毛利必须全部验证；目录未配置时默认不可售。</p></div> : null}
                   </div>
                 ) : casdoor.config.configured ? <p className="settings-hint">企业积分账本未启用：请配置 Resource Gateway；当前不会把 New API 额度误显示为 OpenBuddy 积分。</p> : null}
                 <p className="settings-hint" data-testid="casdoor-custom-fields-hint">组织自定义字段</p>
                 <p className="settings-hint" data-testid="casdoor-org-branding-hint">租户品牌（白标）：{orgBranding ? <><span className="settings-tag">{orgBranding.displayName ?? orgBranding.name}</span>{orgBranding.logo ? <span> · 已配置 logo（base64 长度 {orgBranding.logo.length}）</span> : null}{orgBranding.websiteUrl ? <span> · 官网 {orgBranding.websiteUrl}</span> : null}</> : (orgBrandingLoading ? "加载中…" : "未配置（请在 Casdoor 后台 Organization → displayName / logo / websiteUrl 字段设置）")} <button type="button" className="settings-reset" onClick={loadOrgBranding} disabled={orgBrandingLoading}>刷新品牌</button></p>
-                <p className="settings-hint" data-testid="casdoor-custom-fields-hint-prefix">组织自定义字段：{casdoorSummary.identity.customFields && Object.keys(casdoorSummary.identity.customFields).length > 0 ? <><span className="settings-tag">{Object.keys(casdoorSummary.identity.customFields).length} 个</span>{Object.entries(casdoorSummary.identity.customFields).map(([k, v]) => ` · ${k}=${String(v)}`).join("")}</> : "未配置（请在 Casdoor 后台 Application → Custom signup fields 启用，例如部门 / 工号 / 试用期）"}</p>
-                <p className="settings-hint">能力：{casdoorSummary.identity.capabilities.length ? casdoorSummary.identity.capabilities.join(", ") : "默认拒绝（未授予企业能力）"}</p>
+                <p className="settings-hint" data-testid="casdoor-custom-fields-hint-prefix">组织自定义字段：{casdoor.identity?.customFields && Object.keys(casdoor.identity.customFields).length > 0 ? <><span className="settings-tag">{Object.keys(casdoor.identity.customFields).length} 个</span>{Object.entries(casdoor.identity.customFields).map(([k, v]) => ` · ${k}=${String(v)}`).join("")}</> : "未配置（请在 Casdoor 后台 Application → Custom signup fields 启用，例如部门 / 工号 / 试用期）"}</p>
+                <p className="settings-hint">能力：{(casdoor.identity?.capabilities ?? []).length ? casdoor.identity?.capabilities.join(", ") : "默认拒绝（未授予企业能力）"}</p>
                 <div className="settings-actions">
                   <button type="button" className="settings-button" onClick={openManagement} disabled={!casdoor.tenantContext.membership?.isTenantAdmin && !casdoorSummary.identity.isAdmin}>打开 Casdoor 管理台</button>
                   <button type="button" className="settings-button" onClick={refresh} disabled={busy !== null}>{busy === "refresh" ? "刷新中…" : "刷新企业会话"}</button>
@@ -2168,7 +2180,8 @@ export function AccountSettingsPanel() {
                   <div className="account-section">
                     <label className="settings-field"><span>Issuer / Server URL</span><input value={casdoorDraft.issuer} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, issuer: event.target.value }))} placeholder="https://casdoor.example.com" /></label>
                     <label className="settings-field"><span>Application client ID</span><input value={casdoorDraft.clientId} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, clientId: event.target.value }))} placeholder="Casdoor 应用 clientId" /></label>
-                    <label className="settings-field"><span>Redirect URI</span><input value={casdoorDraft.redirectUri} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, redirectUri: event.target.value }))} placeholder="casdoor://localhost/callback" /></label>
+                    <label className="settings-field"><span>Application client secret</span><input type="password" autoComplete="off" value={casdoorDraft.clientSecret} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, clientSecret: event.target.value }))} placeholder={casdoor?.config.clientSecretConfigured ? "已保存，留空则不修改" : "Casdoor 应用 client secret"} /></label>
+                    <label className="settings-field"><span>Redirect URI</span><input value={casdoorDraft.redirectUri} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, redirectUri: event.target.value }))} placeholder="http://127.0.0.1:端口/callback 或 casdoor://localhost/callback" /></label>
                     <label className="settings-field"><span>短信登录项</span><input value={casdoorDraft.smsProviderHint} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, smsProviderHint: event.target.value }))} placeholder="Verification code" /></label>
                     <label className="settings-field"><span>微信 Provider</span><input value={casdoorDraft.wechatProviderHint} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, wechatProviderHint: event.target.value }))} placeholder="Wechat" /></label>
                     <button type="button" className="settings-button" onClick={saveCasdoorConfig}>保存配置</button>
@@ -2214,6 +2227,21 @@ export function AccountSettingsPanel() {
                     {!loginCapabilities.enterprise.enabled && <p className="settings-hint">企业账号：{loginCapabilities.enterprise.reason}</p>}
                     {!loginCapabilities.sms.enabled && <p className="settings-hint">短信：{loginCapabilities.sms.reason}</p>}
                     {!loginCapabilities.wechat.enabled && <p className="settings-hint">微信：{loginCapabilities.wechat.reason}</p>}
+                    {(loginCapabilities.enterprise.reason?.includes("Redirect") || loginCapabilities.sms.reason?.includes("Redirect") || loginCapabilities.wechat.reason?.includes("Redirect")) && (
+                      <p className="settings-hint">当前 Redirect URI 不在 Casdoor 应用的允许列表里。请在下面改成该应用已登记的回调地址后保存，再登录。</p>
+                    )}
+                  </div>
+                )}
+                <button type="button" className="settings-button" onClick={() => setShowCasdoorConfig((value) => !value)}>{showCasdoorConfig ? "收起配置" : "修改 Casdoor 配置"}</button>
+                {showCasdoorConfig && (
+                  <div className="account-section">
+                    <label className="settings-field"><span>Issuer / Server URL</span><input value={casdoorDraft.issuer} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, issuer: event.target.value }))} placeholder="https://casdoor.example.com" /></label>
+                    <label className="settings-field"><span>Application client ID</span><input value={casdoorDraft.clientId} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, clientId: event.target.value }))} placeholder="留空则保持已保存的 client ID" /></label>
+                    <label className="settings-field"><span>Application client secret</span><input type="password" autoComplete="off" value={casdoorDraft.clientSecret} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, clientSecret: event.target.value }))} placeholder={casdoor?.config.clientSecretConfigured ? "已保存，留空则不修改" : "Casdoor 应用 client secret"} /></label>
+                    <label className="settings-field"><span>Redirect URI</span><input value={casdoorDraft.redirectUri} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, redirectUri: event.target.value }))} placeholder="http://127.0.0.1:端口/callback 或 casdoor://localhost/callback" /></label>
+                    <label className="settings-field"><span>短信登录项</span><input value={casdoorDraft.smsProviderHint} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, smsProviderHint: event.target.value }))} placeholder="Verification code" /></label>
+                    <label className="settings-field"><span>微信 Provider</span><input value={casdoorDraft.wechatProviderHint} onChange={(event) => setCasdoorDraft((draft) => ({ ...draft, wechatProviderHint: event.target.value }))} placeholder="Wechat" /></label>
+                    <button type="button" className="settings-button" onClick={saveCasdoorConfig}>保存配置</button>
                   </div>
                 )}
                 <div className="settings-actions">

@@ -50,8 +50,6 @@ import {
   toggleSkill,
 } from "../agent/pi-resources";
 import { paginateHistoryEntries as paginateHistory } from "../agent/host-modules/pagination";
-import { casdoorAuth } from "../casdoor/casdoor-auth";
-import { casdoorAudit } from "../casdoor/casdoor-audit";
 import { casdoorResources } from "../casdoor/casdoor-resources";
 import { askWeKnora, listWeKnoraKnowledgeBases, weknoraStatus } from "../casdoor/weknora-client";
 import { hasCasdoorCapability } from "@openbuddy/auth-casdoor";
@@ -165,6 +163,7 @@ import { registerDataDirIpc } from "./data-dir";
 import { registerAgentPathsIpc } from "./agent-paths";
 import { registerEnterpriseRuntimeIpc } from "./enterprise-runtime";
 import { registerPlatformRuntimeIpc } from "./platform-runtime";
+import { registerRuntimeSessionIpc } from "./runtime-session";
 import { registerPlatformPluginIpc } from "./platform-plugin";
 // R18 / Phase D — Expert Marketplace Bridge (Pi 扩展市场)
 import {
@@ -1143,6 +1142,7 @@ export async function registerIpc(getWindow: () => BrowserWindow | null): Promis
 	// Enterprise remote runtime (P1-06): off unless OPENBUDDY_ENTERPRISE_GATEWAY_URL is set.
 	registerEnterpriseRuntimeIpc(getWindow);
 	registerPlatformRuntimeIpc();
+	registerRuntimeSessionIpc(getWindow);
 	registerPlatformPluginIpc();
 
 	// Phase A.1 — pi-bridge IPC surface (pi text / image / skill helpers).

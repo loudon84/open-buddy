@@ -31,12 +31,11 @@ import {
 import type { AgentHostIpcDeps } from "./_agent-host-deps";
 
 export function registerSessionMiscIpc(deps: AgentHostIpcDeps): void {
-  const { agentHost, casdoorAuth, ensureAgentHost } = deps;
+  const { agentHost, ensureAgentHost } = deps;
 
   ipcMain.handle("agent:load-session", async (_e, args: { sessionId: string; cwd: string; traceId?: string }) => {
     await ensureAgentHost();
     const input = recordValue(args, "load session payload");
-    casdoorAuth.authorize({ capability: "team.workspace" });
     const sessionId = requiredString(input.sessionId, "session id");
     const traceId = optionalString(input.traceId, "traceId") ?? generateTraceId();
     hostReceived("agent:load-session", traceId, sessionId);
@@ -51,7 +50,6 @@ export function registerSessionMiscIpc(deps: AgentHostIpcDeps): void {
   });
   ipcMain.handle("agent:session-info", async (_e, args: { sessionId: string }) => {
     await ensureAgentHost();
-    casdoorAuth.authorize({ capability: "team.workspace" });
     try {
       return agentHost.sessionInfo(requiredString(recordValue(args, "session info payload").sessionId, "session id"));
     } catch (error) {
@@ -61,13 +59,11 @@ export function registerSessionMiscIpc(deps: AgentHostIpcDeps): void {
   });
   ipcMain.handle("agent:session-messages", async (_e, args: { sessionId: string }) => {
     await ensureAgentHost();
-    casdoorAuth.authorize({ capability: "team.workspace" });
     const input = recordValue(args, "session messages payload");
     return agentHost.readSessionEntries(requiredString(input.sessionId, "session id"));
   });
   ipcMain.handle("agent:session-usage", async (_e, args: { sessionId: string }) => {
     await ensureAgentHost();
-    casdoorAuth.authorize({ capability: "team.workspace" });
     try {
       return agentHost.sessionUsage(requiredString(recordValue(args, "session usage payload").sessionId, "session id"));
     } catch (error) {
@@ -86,7 +82,6 @@ export function registerSessionMiscIpc(deps: AgentHostIpcDeps): void {
     return readPromptHistory(optionalFiniteInteger(input.limit, "limit", 100, 1, 500));
   });
   ipcMain.handle("session_search", async (_e, args: { query: string; cwd?: string | null; limit?: number | null }) => {
-    casdoorAuth.authorize({ capability: "team.workspace" });
     const input = recordValue(args, "session search payload");
     const { searchSessions } = await import("../agent/pi-resources/memory");
     return searchSessions(
@@ -96,7 +91,6 @@ export function registerSessionMiscIpc(deps: AgentHostIpcDeps): void {
     );
   });
   ipcMain.handle("session_fork", async (_e, args: { sessionId: string; cwd?: string | null }) => {
-    casdoorAuth.authorize({ capability: "team.workspace" });
     const input = recordValue(args, "session fork payload");
     const sessionId = requiredString(input.sessionId, "session id");
     const cwd = input.cwd === null || input.cwd === undefined ? undefined : absolutePath(input.cwd, "cwd");

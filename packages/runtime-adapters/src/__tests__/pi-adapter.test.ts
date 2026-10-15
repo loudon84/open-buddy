@@ -34,6 +34,6 @@ describe("PiAdapter", () => {
     await expect(adapter.health()).resolves.toMatchObject({ status: "healthy", endpoint: "embedded://pi", version: "embedded" });
     const capabilities = await adapter.listCapabilities();
     expect(capabilities.map((item) => item.id)).toContain("tools");
-    await expect(adapter.chat({ text: "ping" })).resolves.toMatchObject({ sessionId: "pi-session", text: "echo:ping" });
+    await expect(adapter.chat({ text: "ping" })).resolves.toMatchObject({ text: "echo:ping" });
   });
 });

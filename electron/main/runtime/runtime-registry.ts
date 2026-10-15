@@ -7,7 +7,8 @@ import type { LocalPiPort } from "./local-pi-adapter";
 import { setPlatformRuntimeManager } from "./platform-runtime-handle";
 import { RuntimeManager } from "./runtime-manager";
 
-const piSlot: { current: LocalPiPort & { installationId: string } } = {
+const piSlot: { bound: boolean; current: LocalPiPort & { installationId: string } } = {
+  bound: false,
   current: {
     installationId: "desktop",
     async loadEntries() {
@@ -28,6 +29,9 @@ const piSlot: { current: LocalPiPort & { installationId: string } } = {
 };
 
 const piPort: LocalPiPort & { installationId: string } = {
+  get bound() {
+    return piSlot.bound;
+  },
   get installationId() {
     return piSlot.current.installationId;
   },
@@ -44,7 +48,8 @@ export function installPlatformPiBinding(
   host: Pick<LocalPiPort, "continueSession" | "send" | "subscribe" | "respondPermission">,
 ): void {
   const bound = bindLocalPiRuntime(runtime as never, host);
-  piSlot.current = { ...bound, installationId: piSlot.current.installationId };
+  piSlot.current = { ...bound, installationId: piSlot.current.installationId, bound: true };
+  piSlot.bound = true;
 }
 
 export function createPlatformRuntime(options: { endpoint: string; tokens: TokenSource }): RuntimeManager {

@@ -5,6 +5,8 @@
   "type": "module",
   "types": "./src/types.ts",
   "exports": {
-    ".": "./src/types.ts"
+    ".": "./src/types.ts",
+    "./adapter-registry": "./src/adapter-registry.ts",
+    "./local-pi-events": "./src/local-pi-events.ts"
   }
 }

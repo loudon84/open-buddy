@@ -1,17 +1,17 @@
-import { assertTransition, type RuntimeAdapter, type RuntimePhase } from "./runtime-adapter";
+import { assertTransition, type RuntimeAdapter, type RuntimeLifecyclePhase } from "./runtime-adapter";
 import type { RuntimeConfig } from "./runtime-config";
 
 export interface RuntimeListItem {
   id: string;
   name: string;
   type: RuntimeAdapter["type"];
-  phase: RuntimePhase;
+  phase: RuntimeLifecyclePhase;
   endpoint: string;
 }
 
 export class RuntimeRegistry {
   private readonly adapters = new Map<string, RuntimeAdapter>();
-  private readonly phases = new Map<string, RuntimePhase>();
+  private readonly phases = new Map<string, RuntimeLifecyclePhase>();
   private readonly endpoints = new Map<string, string>();
   private activeId: string | null = null;
 
@@ -75,7 +75,7 @@ export class RuntimeRegistry {
     }));
   }
 
-  private move(id: string, to: RuntimePhase): void {
+  private move(id: string, to: RuntimeLifecyclePhase): void {
     const from = this.phases.get(id);
     if (!from) throw new Error(`unknown runtime id ${id}`);
     assertTransition(from, to);

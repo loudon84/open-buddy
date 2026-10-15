@@ -4,7 +4,7 @@ export {
   type IdentityContext,
   type RuntimeAdapter,
   type RuntimeHealth,
-  type RuntimePhase,
+  type RuntimeLifecyclePhase,
   type RuntimeRequest,
   type RuntimeResponse,
   type RuntimeType,

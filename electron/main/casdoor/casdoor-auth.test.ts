@@ -1,9 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const { authWindowLoadUrl } = vi.hoisted(() => ({ authWindowLoadUrl: vi.fn(async () => undefined) }));
+
 vi.mock("electron", () => ({
   app: { getPath: () => "/tmp/openbuddy-casdoor-auth-test" },
   safeStorage: { isEncryptionAvailable: () => false },
   shell: { openExternal: vi.fn() },
+  BrowserWindow: class {
+    webContents = { on: () => undefined, setWindowOpenHandler: () => undefined };
+    isDestroyed() { return false; }
+    close() {}
+    on() {}
+    loadURL = authWindowLoadUrl;
+    static getFocusedWindow() { return null; }
+    static getAllWindows() { return []; }
+  },
+  session: { fromPartition: () => ({ webRequest: { onBeforeRequest: () => undefined }, clearStorageData: async () => undefined }) },
+  protocol: { handle: () => undefined },
 }));
 
 import { normalizeCasdoorClaims } from "@openbuddy/auth-casdoor";
@@ -33,20 +46,22 @@ function configuredService(): CasdoorAuthService {
   });
   internal.activeTenantId = "tenant-a";
   internal.accessToken = "casdoor-access-token";
-  internal.expiresAt = Date.now() + 60_000;
+  internal.expiresAt = Date.now() + 120_000;
   return service;
 }
 
 describe("Casdoor remote resource authorization", () => {
   beforeEach(() => {
+    authWindowLoadUrl.mockClear();
     vi.restoreAllMocks();
     delete process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET;
+    delete process.env.OPENBUDDY_BACKEND_ORIGIN;
     delete process.env.OPENBUDDY_WEKNORA_TOKEN_EXCHANGE_URL;
   });
 
-  it("uses local authorization when remote enforcement is not configured", async () => {
+  it("fails closed when the backend authz origin is not configured", async () => {
     const service = configuredService();
-    expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", action: "read" })).toBe(true);
+    expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", action: "read" })).toBe(false);
     expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", action: "write" })).toBe(false);
   });
 
@@ -65,8 +80,9 @@ describe("Casdoor remote resource authorization", () => {
 
     const result = await service.startLogin("default");
     expect(result.ok).toBe(true);
-    expect(shell.openExternal).toHaveBeenCalledTimes(1);
-    const authorizationUrl = new URL(vi.mocked(shell.openExternal).mock.calls[0][0] as string);
+    expect(shell.openExternal).not.toHaveBeenCalled();
+    expect(authWindowLoadUrl).toHaveBeenCalledTimes(1);
+    const authorizationUrl = new URL(authWindowLoadUrl.mock.calls[0][0] as string);
     expect(authorizationUrl.origin).toBe("https://casdoor.test");
     expect(authorizationUrl.pathname).toBe("/login/oauth/authorize");
     expect(authorizationUrl.searchParams.get("client_id")).toBe("client-id");
@@ -76,18 +92,23 @@ describe("Casdoor remote resource authorization", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("fails closed when the Casdoor application is not ready for enterprise login", async () => {
+  it("opens the embedded login when the redirect probe reports the URI is missing", async () => {
     const service = configuredService();
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({
         status: "ok",
         data: { redirectUris: [], scopes: [], enableCodeSignin: false, signinMethods: [], providers: [] },
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        issuer: "https://casdoor.test",
+        authorization_endpoint: "https://casdoor.test/login/oauth/authorize",
+        token_endpoint: "https://casdoor.test/api/login/oauth/access_token",
       }), { status: 200 }));
 
     const result = await service.startLogin("default");
-    expect(result.ok).toBe(false);
-    expect(result).toMatchObject({ error: expect.stringContaining("未登记回调 URI") });
+    expect(result.ok).toBe(true);
     expect(vi.mocked(shell.openExternal)).not.toHaveBeenCalled();
+    expect(authWindowLoadUrl).toHaveBeenCalledTimes(1);
   });
 
   it("rejects malformed requests without throwing or making a request", async () => {
@@ -106,16 +127,17 @@ describe("Casdoor remote resource authorization", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("uses Casdoor Casbin enforcement and the original client id", async () => {
+  it("uses the backend authz check instead of a desktop client secret", async () => {
     const service = configuredService();
-    process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET = "secret";
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ status: "ok", data: [true] }), { status: 200 }));
+    process.env.OPENBUDDY_BACKEND_ORIGIN = "https://backend.test";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ results: [{ allow: true }] }), { status: 200 }));
     expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", resourceId: "workspace-1", action: "read" })).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(String(url)).toBe("https://casdoor.test/api/enforce?enforcerId=openbuddy-enforcer");
-    expect((init?.headers as Record<string, string>).authorization).toBe(`Basic ${Buffer.from("client-id:secret").toString("base64")}`);
-    expect(init?.body).toBe(JSON.stringify(["tenant-a/member", "workspace-1", "read"]));
+    expect(String(url)).toBe("https://backend.test/api/v1/authz/check");
+    expect((init?.headers as Record<string, string>).authorization).toBe("Bearer casdoor-access-token");
+    expect((init?.headers as Record<string, string>)["X-Tenant-Id"]).toBe("tenant-a");
+    expect(init?.body).toBe(JSON.stringify({ checks: [{ resource: "workspace:workspace-1", action: "read" }] }));
   });
 
   it("exchanges a short-lived WeKnora token without exposing the Casdoor token", async () => {
@@ -186,12 +208,13 @@ describe("Casdoor remote resource authorization", () => {
     await expect(service.refreshWeKnoraExchangeToken(current)).rejects.toThrow("权限版本已失效");
   });
 
-  it("fails closed when Casdoor denies or is unavailable", async () => {
+  it("fails closed when the backend denies or is unavailable", async () => {
     const service = configuredService();
-    process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET = "secret";
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ status: "ok", data: [false] }), { status: 200 })).mockRejectedValueOnce(new Error("network down"));
+    process.env.OPENBUDDY_BACKEND_ORIGIN = "https://backend.test";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ results: [{ allow: false }] }), { status: 200 })).mockRejectedValueOnce(new Error("network down"));
     expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", action: "read" })).toBe(false);
     expect(await service.authorizeResourceRemotely({ tenantId: "tenant-a", resource: "workspace", action: "read" })).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("exposes a stable authorization code to main-process callers", () => {

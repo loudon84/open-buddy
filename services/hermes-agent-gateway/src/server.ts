@@ -32,9 +32,17 @@ function errorBody(code: string, message: string, retryable = false) {
   return { error: { code, message, retryable, traceId: `trace-${randomUUID()}` } };
 }
 
+const MAX_BODY_BYTES = 1024 * 1024;
+
 async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(Buffer.from(chunk));
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.from(chunk);
+    size += buffer.length;
+    if (size > MAX_BODY_BYTES) throw new HttpError(413, "PAYLOAD_TOO_LARGE", "body exceeds 1 MiB");
+    chunks.push(buffer);
+  }
   if (chunks.length === 0) return {};
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
 }
@@ -152,7 +160,23 @@ export async function startGateway(options: {
       });
 
       if (req.method === "GET" && url.pathname === "/v1/capabilities") {
-        send(200, { protocolVersion: "1.0", kind: "remote-hermes" });
+        send(200, {
+          protocolVersion: "1.0",
+          kind: "remote-hermes",
+          features: {
+            resume: true,
+            cancel: true,
+            approvals: true,
+            tools: false,
+            tasks: false,
+            artifacts: false,
+            attachments: false,
+            steer: false,
+            followUp: false,
+            modelSwitch: false,
+            liveStream: false,
+          },
+        });
         return;
       }
 
@@ -171,6 +195,9 @@ export async function startGateway(options: {
       }
 
       if (req.method === "POST" && url.pathname === "/v1/sessions") {
+        if (typeof body.workspaceId === "string" && body.workspaceId !== identity.workspaceId) {
+          throw new HttpError(403, "FORBIDDEN", "workspace is outside the tenant");
+        }
         const instance = requireInstance(String(body.agentInstanceId));
         requireWrite();
         const upstream = await callUpstream(instance.upstreamUrl, "/v1/sessions", {

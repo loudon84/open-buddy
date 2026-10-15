@@ -7,6 +7,7 @@ import {
   type IdentityContext,
 } from "@openbuddy/shared-types";
 import { IDENTITY_FORBIDDEN_TEXT, IDENTITY_UNAVAILABLE_TEXT, identityErrorText } from "./error-copy";
+import { tenantHeaders } from "./tenant-header";
 
 const CACHE_NAMESPACE = "identity:context";
 const STORAGE_APP_VERSION = "openbuddy-identity";
@@ -35,6 +36,8 @@ export type IdentityDeps = {
   recordAudit?: (event: IdentityAuditInput) => void | Promise<void>;
   getAuth?: () => IdentityAuth | null;
   refreshAuth?: () => Promise<unknown>;
+  tenantId?: () => string | undefined;
+  binding?: () => { issuer: string; subject: string; tenantId: string; epoch: number } | null;
 };
 
 export type IdentitySummary = {
@@ -95,6 +98,8 @@ export class IdentityService {
 
   current(): IdentityContext | null {
     this.ensureLoaded();
+    const binding = this.deps.binding?.();
+    if (binding && this.envelope && this.envelope.identityContext.tenant.id !== binding.tenantId) return null;
     return this.envelope?.identityContext ?? null;
   }
 
@@ -152,16 +157,41 @@ export class IdentityService {
     auth.setIdentitySummary(() => this.summary());
   }
 
+  /** Casdoor is the identity source when OPENBUDDY_IDENTITY_MODE is not `backend`. */
+  attachCasdoor(input: {
+    origin: string;
+    getAccessToken: () => Promise<string>;
+    tenantId: () => string | undefined;
+    binding: () => { issuer: string; subject: string; tenantId: string; epoch: number } | null;
+    onChange: (listener: (reason: "login" | "logout") => void) => void;
+  }): void {
+    let accessToken = "";
+    this.deps.getAuth = () => (input.origin && accessToken ? { origin: input.origin, accessToken } : null);
+    this.deps.refreshAuth = async () => { accessToken = await input.getAccessToken(); };
+    this.deps.tenantId = () => input.tenantId();
+    this.deps.binding = () => input.binding();
+    this.deps.recordAudit ??= (event) => recordIdentityAudit(event);
+    input.onChange((reason) => {
+      if (reason === "login") void this.refresh();
+      else void this.clear("logout");
+    });
+  }
+
   private async fetchContext(retried: boolean): Promise<{ ok: true; context: IdentityContext } | { ok: false; error: string }> {
     this.ensureLoaded();
-    const auth = this.deps.getAuth?.() ?? null;
+    let auth = this.deps.getAuth?.() ?? null;
+    if (!auth?.accessToken) {
+      await this.deps.refreshAuth?.();
+      auth = this.deps.getAuth?.() ?? null;
+    }
     if (!auth?.origin || !auth.accessToken) return { ok: false, error: "未登录" };
+    const binding = this.deps.binding?.() ?? null;
     const started = this.now();
     let response: Response;
     try {
       response = await this.fetchImpl(`${auth.origin}/api/v1/identity/context`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${auth.accessToken}` },
+        headers: { Authorization: `Bearer ${auth.accessToken}`, ...tenantHeaders(this.deps.tenantId?.() ?? binding?.tenantId) },
       });
     } catch {
       return this.failSoft(started, IDENTITY_UNAVAILABLE_TEXT);

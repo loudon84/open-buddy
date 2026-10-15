@@ -130,6 +130,11 @@ export interface AppShellRuntime {
   setDataDirOpen: Dispatch<SetStateAction<boolean>>;
   /** 登录状态回写(侧栏账户区据此显示已登录态)。 */
   setBackendSession: Dispatch<SetStateAction<BackendAuthView | null>>;
+  enterpriseAccount: {
+    label?: string;
+    status: "signed_out" | "signed_in" | "configuration_needed" | "error";
+    notice?: string;
+  };
   setTrustRequest: Dispatch<SetStateAction<{ cwd?: string; reason?: string } | null>>;
   setPlaceholderView: Dispatch<SetStateAction<string | null>>;
 

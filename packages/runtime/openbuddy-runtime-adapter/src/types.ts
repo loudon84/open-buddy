@@ -7,6 +7,13 @@
 
 export type RuntimeKind = "local-pi" | "remote-hermes" | string;
 
+/** Writes use `local-pi` or `remote-hermes:<instance>`. `pi` and `hermes` are read aliases. */
+export function normalizeRuntimeId(id: string): string {
+  if (id === "pi" || id === "local-pi") return "local-pi";
+  if (id === "hermes" || id === "remote-hermes") return "remote-hermes";
+  return id;
+}
+
 export interface Scope {
   tenantId: string;
   workspaceId: string;
@@ -50,6 +57,11 @@ export interface Capabilities {
     tools: boolean;
     tasks: boolean;
     artifacts: boolean;
+    attachments: boolean;
+    steer: boolean;
+    followUp: boolean;
+    modelSwitch: boolean;
+    liveStream: boolean;
   };
   toolSchemaVersion: string;
 }
@@ -132,11 +144,26 @@ export type RuntimeEvent = SessionRef & {
   payload: unknown;
 };
 
-export interface RuntimeAdapter {
+export interface RuntimeStatus {
+  runtimeId: string;
+  kind: RuntimeKind;
+  state: "disconnected" | "connecting" | "connected" | "degraded" | "error" | "stopped";
+  activeRuns: number;
+  capabilities?: Capabilities;
+  lastError?: RuntimeError;
+  checkedAt: string;
+}
+
+export interface RuntimeConnection {
   connect(config: ConnectionConfig, options?: CallOptions): Promise<Capabilities>;
   disconnect(options?: CallOptions): Promise<void>;
+  queryStatus(agentInstanceId: string, options?: CallOptions): Promise<RuntimeStatus>;
+  listTools(ref: SessionRef, options?: CallOptions): Promise<ToolDescriptor[]>;
+}
+
+export interface RuntimeSessionPort {
   createSession(
-    input: RequestContext & { agentInstanceId: string },
+    input: RequestContext & { agentInstanceId: string; workspaceId?: string },
     options?: CallOptions,
   ): Promise<Session>;
   getSession(ref: SessionRef, options?: CallOptions): Promise<Session>;
@@ -156,7 +183,6 @@ export interface RuntimeAdapter {
     options?: CallOptions,
   ): Promise<{ accepted: boolean }>;
   executeTask(input: TaskInput, options?: CallOptions): Promise<Task>;
-  listTools(ref: SessionRef, options?: CallOptions): Promise<ToolDescriptor[]>;
   executeTool(
     ref: SessionRef,
     toolName: string,
@@ -164,11 +190,9 @@ export interface RuntimeAdapter {
     context: RequestContext,
     options?: CallOptions,
   ): Promise<{ invocationId: string; runId: string }>;
-  queryStatus(
-    agentInstanceId: string,
-    options?: CallOptions,
-  ): Promise<{ agentInstanceId: string; status: string; capabilities: Capabilities; updatedAt: string }>;
 }
+
+export interface RuntimeAdapter extends RuntimeConnection, RuntimeSessionPort {}
 
 export type RuntimePhase =
   | "idle"

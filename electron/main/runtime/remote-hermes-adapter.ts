@@ -10,6 +10,7 @@ import type {
   RuntimeAdapter,
   RuntimeError,
   RuntimeEvent,
+  RuntimeStatus,
   Session,
   SessionRef,
   Task,
@@ -31,15 +32,6 @@ export class RemoteRuntimeError extends Error implements RuntimeError {
 }
 
 export type RemoteHermesAdapterOptions = HermesClientOptions & { pollIntervalMs?: number };
-
-const protocolFeatures: Capabilities["features"] = {
-  resume: true,
-  cancel: false,
-  approvals: false,
-  tools: false,
-  tasks: false,
-  artifacts: false,
-};
 
 function parseSse(text: string): RuntimeEvent[] {
   const events: RuntimeEvent[] = [];
@@ -77,7 +69,7 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
 
   constructor(options: RemoteHermesAdapterOptions) {
     this.client = new HermesClient(options);
-    this.pollIntervalMs = options.pollIntervalMs ?? 1000;
+    this.pollIntervalMs = options.pollIntervalMs ?? 500;
   }
 
   async connect(_config?: ConnectionConfig, _options?: CallOptions): Promise<Capabilities> {
@@ -86,7 +78,7 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
       protocolVersion: "1.0",
       runtimeId: "remote-hermes",
       kind: handshake.kind,
-      features: protocolFeatures,
+      features: handshake.features as Capabilities["features"],
       toolSchemaVersion: "1.0",
     };
   }
@@ -94,7 +86,13 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
   async disconnect(): Promise<void> {}
 
   async createSession(input: RequestContext & { agentInstanceId: string }, options?: CallOptions): Promise<Session> {
-    const body = await this.call<Record<string, unknown>>("POST", "/v1/sessions", input, { agentInstanceId: input.agentInstanceId }, options);
+    const body = await this.call<Record<string, unknown>>(
+      "POST",
+      "/v1/sessions",
+      input,
+      { agentInstanceId: input.agentInstanceId, workspaceId: input.workspaceId },
+      options,
+    );
     return this.toSession(body);
   }
 
@@ -115,22 +113,30 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
 
   async *stream(ref: SessionRef, afterSeq: number, options?: CallOptions): AsyncIterable<RuntimeEvent> {
     let cursor = afterSeq;
+    let idle = this.pollIntervalMs;
     while (!options?.signal?.aborted) {
       const response = await this.client.transport.request(
         `/v1/sessions/${encodeURIComponent(ref.sessionId)}/events?afterSeq=${cursor}`,
-        { method: "GET", headers: { accept: "text/event-stream" }, signal: options?.signal },
+        {
+          method: "GET",
+          headers: { accept: "text/event-stream" },
+          signal: AbortSignal.any([AbortSignal.timeout(options?.timeoutMs ?? 30_000), ...(options?.signal ? [options.signal] : [])]),
+        },
       ).catch((error: unknown) => {
         if (options?.signal?.aborted) return null;
         throw error;
       });
       if (!response) return;
       if (!response.ok) throw await this.toError(response);
-      for (const event of parseSse(await response.text())) {
+      const page = parseSse(await response.text());
+      if (page.length === 0) idle = Math.min(idle * 2, 2000);
+      else idle = this.pollIntervalMs;
+      for (const event of page) {
         if (event.seq <= cursor) continue;
         cursor = event.seq;
         yield event;
       }
-      await wait(this.pollIntervalMs, options?.signal);
+      await wait(idle, options?.signal);
     }
   }
 
@@ -192,11 +198,22 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
     );
   }
 
-  queryStatus(
-    agentInstanceId: string,
-    options?: CallOptions,
-  ): Promise<{ agentInstanceId: string; status: string; capabilities: Capabilities; updatedAt: string }> {
-    return this.call("GET", `/v1/agent-instances/${encodeURIComponent(agentInstanceId)}/status`, null, undefined, options);
+  async queryStatus(agentInstanceId: string, options?: CallOptions): Promise<RuntimeStatus> {
+    const body = await this.call<Partial<RuntimeStatus> & { status?: string }>(
+      "GET",
+      `/v1/agent-instances/${encodeURIComponent(agentInstanceId)}/status`,
+      null,
+      undefined,
+      options,
+    );
+    return {
+      runtimeId: body.runtimeId ?? `remote-hermes:${agentInstanceId}`,
+      kind: "remote-hermes",
+      state: body.state ?? "disconnected",
+      activeRuns: body.activeRuns ?? 0,
+      capabilities: body.capabilities,
+      checkedAt: body.checkedAt ?? new Date(0).toISOString(),
+    };
   }
 
   private async call<T>(
@@ -211,9 +228,10 @@ export class RemoteHermesAdapter implements RuntimeAdapter {
       headers["idempotency-key"] = context.idempotencyKey;
       headers["x-request-id"] = context.requestId;
     }
-    const signal = options?.timeoutMs
-      ? AbortSignal.any([AbortSignal.timeout(options.timeoutMs), ...(options.signal ? [options.signal] : [])])
-      : options?.signal;
+    const signal = AbortSignal.any([
+      AbortSignal.timeout(options?.timeoutMs ?? 15_000),
+      ...(options?.signal ? [options.signal] : []),
+    ]);
     let response: Response;
     try {
       response = await this.client.transport.request(path, { method, body, headers, signal });

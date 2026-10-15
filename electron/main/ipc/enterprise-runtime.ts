@@ -1,5 +1,5 @@
 import type { BrowserWindow, IpcMainInvokeEvent } from "electron";
-import { casdoorAuth } from "../casdoor/casdoor-auth";
+import { enterpriseIdentityPort } from "../identity/enterprise-identity-port";
 import { sendSafe } from "../collaboration/send-safe";
 import { EnterpriseRuntimeController, resolveGatewayEndpoint } from "../runtime/enterprise-runtime-controller";
 import { RemoteRuntimeError } from "../runtime/remote-hermes-adapter";
@@ -9,17 +9,18 @@ import { enumValue, optionalFiniteInteger, optionalString, recordValue, required
 export const ENTERPRISE_RUNTIME_EVENT_CHANNEL = "openbuddy://enterprise-runtime";
 
 function signedInIdentity(): { tenantId: string; actorId: string } | null {
-  const view = casdoorAuth.status();
-  const tenantId = view.tenantContext.activeTenantId;
-  if (view.status !== "signed_in" || !view.identity || !tenantId) return null;
-  return { tenantId, actorId: view.identity.subject };
+  const snapshot = enterpriseIdentityPort().current();
+  if (!snapshot) return null;
+  return { tenantId: snapshot.tenantId, actorId: snapshot.subject };
 }
 
 async function freshToken(): Promise<string> {
-  await casdoorAuth.refresh();
-  const refreshed = casdoorAuth.getAccessToken();
-  if (!refreshed) throw new RemoteRuntimeError("UNAUTHENTICATED", "signed out", false, "desktop-main", 401);
-  return refreshed;
+  try {
+    return await enterpriseIdentityPort().getAccessToken();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "signed out";
+    throw new RemoteRuntimeError("UNAUTHENTICATED", message, false, "desktop-main", 401);
+  }
 }
 
 /**
@@ -32,10 +33,15 @@ export function registerEnterpriseRuntimeIpc(getWindow: () => BrowserWindow | nu
     endpoint: resolveGatewayEndpoint(process.env.OPENBUDDY_ENTERPRISE_GATEWAY_URL),
     identity: signedInIdentity,
     tokens: {
-      getAccessToken: async () => casdoorAuth.getAccessToken() ?? freshToken(),
+      getAccessToken: () => freshToken(),
       refresh: freshToken,
     },
     emit: (item) => sendSafe(getWindow(), ENTERPRISE_RUNTIME_EVENT_CHANNEL, item),
+  });
+  enterpriseIdentityPort().onChange((change) => {
+    if (change.reason === "logout" || change.reason === "tenant-switch" || change.reason === "issuer-change" || change.reason === "session-invalidated") {
+      void controller.dispose();
+    }
   });
 
   const guarded =

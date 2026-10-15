@@ -1,7 +1,7 @@
 import { app, safeStorage, shell } from "electron";
 import { readFile, rm } from "node:fs/promises";
 import { createPublicKey, createVerify } from "node:crypto";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { openStorageSync, SettingsDocumentStore } from "@openbuddy/storage";
 import {
   buildAuthorizationUrl,
@@ -91,6 +91,7 @@ type CasdoorEndpoints = {
   token_endpoint: string;
   userinfo_endpoint?: string;
   end_session_endpoint?: string;
+  revocation_endpoint?: string;
   introspection_endpoint?: string;
   jwks_uri?: string;
 };
@@ -98,6 +99,9 @@ type CasdoorEndpoints = {
 export interface CasdoorAuthConfig {
   issuer: string;
   clientId: string;
+  /** Present only in the main process. IPC redacts this. */
+  clientSecret?: string;
+  clientSecretConfigured?: boolean;
   redirectUri: string;
   scope: string;
   smsProviderHint: string;
@@ -128,8 +132,8 @@ export interface WeKnoraExchangeToken {
 }
 
 type PersistedConfig = Partial<Omit<CasdoorAuthConfig, "configured" | "reason">>;
-type PersistedSession = { refreshToken: string; expiresAt?: number; provider?: string; activeTenantId?: string };
-type PendingFlow = { state: string; nonce: string; verifier: string; provider?: string; expiresAt: number; endpoints: CasdoorEndpoints; config: OidcConfig };
+type PersistedSession = { refreshToken: string; expiresAt?: number; provider?: string; activeTenantId?: string; epoch?: number };
+type PendingFlow = { state: string; nonce: string; verifier: string; provider?: string; expiresAt: number; endpoints: CasdoorEndpoints; config: OidcConfig; epoch: number };
 
 function trimSlash(value: string): string {
   return value.replace(/\/+$/, "");
@@ -151,9 +155,13 @@ function parseHttpUrl(value: string): URL | null {
 function isValidRedirectUri(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol.toLowerCase() === "casdoor:"
+    const casdoorScheme = url.protocol.toLowerCase() === "casdoor:"
       && url.hostname.toLowerCase() === "localhost"
-      && !url.port
+      && !url.port;
+    const loopback = url.protocol.toLowerCase() === "http:"
+      && url.hostname === "127.0.0.1"
+      && Boolean(url.port);
+    return (casdoorScheme || loopback)
       && !url.username
       && !url.password
       && url.pathname === "/callback"
@@ -205,6 +213,18 @@ async function readPersistedConfig(): Promise<PersistedConfig | null> {
     try { await rm(legacyConfigPath(), { force: true }); } catch { /* best effort */ }
     return null;
   }
+}
+
+function sealSecret(plain: string): string {
+  if (!plain || !safeStorage.isEncryptionAvailable()) return plain;
+  return `enc:${safeStorage.encryptString(plain).toString("base64")}`;
+}
+
+function openSecret(stored: string | undefined): string | undefined {
+  if (!stored) return undefined;
+  if (!stored.startsWith("enc:")) return stored;
+  if (!safeStorage.isEncryptionAvailable()) return undefined;
+  return safeStorage.decryptString(Buffer.from(stored.slice(4), "base64"));
 }
 
 function writePersistedConfig(next: PersistedConfig): void {
@@ -259,8 +279,11 @@ export class CasdoorAuthService {
   private refreshToken: string | null = null;
   private activeTenantId: string | undefined;
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private refreshInflight: Promise<CasdoorSessionView> | null = null;
+  private epoch = 0;
   private loginCapabilities: CasdoorLoginCapabilities | null = null;
   private statusListener: ((kind: CasdoorLifecycleKind) => void) | null = null;
+  private readonly extraStatusListeners = new Set<(kind: CasdoorLifecycleKind) => void>();
 
   constructor() {
     this.config = this.defaultConfig();
@@ -270,8 +293,14 @@ export class CasdoorAuthService {
     this.statusListener = listener;
   }
 
+  addStatusListener(listener: (kind: CasdoorLifecycleKind) => void): () => void {
+    this.extraStatusListeners.add(listener);
+    return () => { this.extraStatusListeners.delete(listener); };
+  }
+
   private notifyStatusChange(kind: CasdoorLifecycleKind = "state-change"): void {
     this.statusListener?.(kind);
+    for (const listener of this.extraStatusListeners) listener(kind);
   }
 
   private userDataPath(file: string): string {
@@ -292,6 +321,7 @@ export class CasdoorAuthService {
     const persisted = await readPersistedConfig();
     const issuer = trimSlash(firstText(environment.issuer, persisted?.issuer, DEFAULT_ISSUER) ?? DEFAULT_ISSUER);
     const clientId = firstText(environment.clientId, persisted?.clientId, DEFAULT_CLIENT_ID) ?? DEFAULT_CLIENT_ID;
+    const clientSecret = firstText(process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET, openSecret(persisted?.clientSecret));
     const redirectUri = firstText(environment.redirectUri, persisted?.redirectUri, DEFAULT_REDIRECT_URI) ?? DEFAULT_REDIRECT_URI;
     const scope = firstText(environment.scope, persisted?.scope, "openid profile email phone offline_access") ?? "openid profile email phone offline_access";
     const smsProviderHint = firstText(environment.smsProviderHint, persisted?.smsProviderHint, "Verification code") ?? "Verification code";
@@ -304,6 +334,7 @@ export class CasdoorAuthService {
     return {
       issuer,
       clientId,
+      ...(clientSecret ? { clientSecret } : {}),
       redirectUri,
       scope,
       smsProviderHint,
@@ -336,10 +367,12 @@ export class CasdoorAuthService {
 
   private installProtocolRegistration(): void {
     if (process.defaultApp) {
-      app.setAsDefaultProtocolClient("casdoor", process.execPath, [process.argv[1]]);
-    } else {
-      app.setAsDefaultProtocolClient("casdoor");
+      const entry = process.argv[1];
+      if (!entry) return;
+      app.setAsDefaultProtocolClient("casdoor", process.execPath, [resolve(entry)]);
+      return;
     }
+    app.setAsDefaultProtocolClient("casdoor");
   }
 
   async init(): Promise<void> {
@@ -351,13 +384,15 @@ export class CasdoorAuthService {
   }
 
   getConfig(): CasdoorAuthConfig {
-    return { ...this.config, clientId: this.config.clientId ? "configured" : "" };
+    const { clientSecret: _secret, ...view } = this.config;
+    return { ...view, clientId: this.config.clientId ? "configured" : "", clientSecretConfigured: Boolean(_secret) };
   }
 
   async saveConfig(patch: Partial<PersistedConfig>): Promise<CasdoorAuthConfig> {
     const next: PersistedConfig = {
       issuer: firstText(patch.issuer, this.config.issuer) ?? this.config.issuer,
       clientId: firstText(patch.clientId, this.config.clientId) ?? this.config.clientId,
+      clientSecret: firstText(patch.clientSecret, this.config.clientSecret),
       redirectUri: firstText(patch.redirectUri, this.config.redirectUri) ?? this.config.redirectUri,
       scope: firstText(patch.scope, this.config.scope) ?? this.config.scope,
       smsProviderHint: firstText(patch.smsProviderHint, this.config.smsProviderHint) ?? this.config.smsProviderHint,
@@ -372,12 +407,15 @@ export class CasdoorAuthService {
       throw new Error("Casdoor 配置无效：issuer、client ID、管理地址和回调 URI 必须有效且管理地址与 issuer 同源");
     }
     const configChanged = next.issuer !== this.config.issuer || next.clientId !== this.config.clientId || next.redirectUri !== this.config.redirectUri;
-    writePersistedConfig(next);
+    writePersistedConfig({ ...next, clientSecret: next.clientSecret ? sealSecret(next.clientSecret) : undefined });
     this.config = await this.readConfig();
     this.endpoints = null;
     this.loginCapabilities = null;
     this.lastError = undefined;
-    if (configChanged) await this.clearSession();
+    if (configChanged) {
+      this.bumpEpoch();
+      await this.clearSession();
+    }
     this.notifyStatusChange(configChanged ? "config-change" : "state-change");
     return this.getConfig();
   }
@@ -393,7 +431,7 @@ export class CasdoorAuthService {
     if (typeof json.issuer !== "string" || trimSlash(json.issuer) !== this.config.issuer) {
       throw new Error("Casdoor discovery issuer 与配置不匹配");
     }
-    for (const endpoint of [json.authorization_endpoint, json.token_endpoint, json.userinfo_endpoint, json.end_session_endpoint, json.introspection_endpoint, json.jwks_uri]) {
+    for (const endpoint of [json.authorization_endpoint, json.token_endpoint, json.userinfo_endpoint, json.end_session_endpoint, json.revocation_endpoint, json.introspection_endpoint, json.jwks_uri]) {
       if (!endpoint) continue;
       const endpointUrl = parseHttpUrl(endpoint);
       if (!endpointUrl || endpointUrl.origin !== issuerUrl.origin) throw new Error("Casdoor discovery 返回了不受信任的端点");
@@ -416,7 +454,7 @@ export class CasdoorAuthService {
       const capability = provider === "default"
         ? capabilities.enterprise
         : provider === "sms" ? capabilities.sms : capabilities.wechat;
-      if (!capability.enabled) throw new Error(capability.reason ?? `Casdoor ${provider} 登录未配置`);
+      if (provider !== "default" && !capability.enabled) throw new Error(capability.reason ?? `Casdoor ${provider} 登录未配置`);
       const endpoints = await this.discover();
       const verifier = generateState(48);
       const pkce = await generatePkceS256(verifier);
@@ -433,11 +471,21 @@ export class CasdoorAuthService {
         providerHint: provider === "wechat" ? providerHint : undefined,
         signinMethod: provider === "sms" ? providerHint : undefined,
       };
+      this.bumpEpoch();
       this.pending.clear();
-      this.pending.set(state, { state, nonce, verifier, provider, expiresAt: Date.now() + FLOW_TIMEOUT_MS, endpoints, config });
+      this.pending.set(state, { state, nonce, verifier, provider, expiresAt: Date.now() + FLOW_TIMEOUT_MS, endpoints, config, epoch: this.epoch });
       const url = buildAuthorizationUrl(config, pkce, state, nonce);
       this.lastError = undefined;
-      await shell.openExternal(url);
+      const { BrowserWindow } = await import("electron");
+      const { openEnterpriseOAuthWindow } = await import("../backend-auth/oauth-window");
+      const parent = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null;
+      await openEnterpriseOAuthWindow({
+        url,
+        callbackPrefix: this.config.redirectUri,
+        parent,
+        onConsumed: (callbackUrl) => { void this.handleCallback(callbackUrl.toString()); },
+        onClosedBeforeConsume: () => { this.lastError = "登录窗口已关闭"; },
+      });
       return { ok: true, url };
     } catch (error) {
       this.lastError = error instanceof Error ? error.message : String(error);
@@ -486,6 +534,10 @@ export class CasdoorAuthService {
       return;
     }
     this.pending.delete(callbackState);
+    if (flow.epoch !== this.epoch) {
+      this.lastError = "登录已失效";
+      return;
+    }
     if (callback.error || !callback.code || callbackState !== flow.state) {
       this.lastError = callback.error || "Casdoor 未返回授权码";
       return;
@@ -493,6 +545,10 @@ export class CasdoorAuthService {
     try {
       if (!isCasdoorCallbackUrl(callbackUrl, flow.config.redirectUri)) throw new Error("登录回调地址不匹配");
       const token = await this.exchangeCode(flow, callback.code);
+      if (flow.epoch !== this.epoch) {
+        this.lastError = "登录已失效";
+        return;
+      }
       const identity = await this.identityFromToken(flow.endpoints, token, flow.provider, flow.nonce);
       this.identity = identity;
       this.accessToken = token.accessToken;
@@ -520,8 +576,7 @@ export class CasdoorAuthService {
       code,
       code_verifier: flow.verifier,
     });
-    const secret = process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET;
-    if (secret) body.set("client_secret", secret);
+    if (this.config.clientSecret) body.set("client_secret", this.config.clientSecret);
     const response = await this.fetchWithTimeout(flow.endpoints.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body });
     const json = await response.json().catch(() => null) as Record<string, unknown> | null;
     if (!response.ok || !json || typeof json.access_token !== "string") throw new Error(String(json?.error_description ?? json?.error ?? `Casdoor token exchange failed (${response.status})`));
@@ -617,7 +672,7 @@ export class CasdoorAuthService {
       await clearPersistedSession();
       return;
     }
-    const data: PersistedSession = { refreshToken: safeStorage.encryptString(this.refreshToken).toString("base64"), expiresAt: this.expiresAt, provider: this.provider, activeTenantId: this.activeTenantId };
+    const data: PersistedSession = { refreshToken: safeStorage.encryptString(this.refreshToken).toString("base64"), expiresAt: this.expiresAt, provider: this.provider, activeTenantId: this.activeTenantId, epoch: this.epoch };
     writePersistedSession(data);
   }
 
@@ -627,6 +682,7 @@ export class CasdoorAuthService {
       if (!data || !safeStorage.isEncryptionAvailable()) return;
       this.refreshToken = safeStorage.decryptString(Buffer.from(data.refreshToken, "base64"));
       this.expiresAt = data.expiresAt;
+      if (typeof data.epoch === "number") this.epoch = data.epoch;
       this.provider = data.provider;
       this.activeTenantId = data.activeTenantId;
       await this.refresh();
@@ -637,14 +693,24 @@ export class CasdoorAuthService {
 
   async refresh(): Promise<CasdoorSessionView> {
     if (!this.refreshToken) return this.status();
+    if (this.refreshInflight) return this.refreshInflight;
+    const epochAtStart = this.epoch;
+    this.refreshInflight = this.refreshOnce(epochAtStart).finally(() => {
+      this.refreshInflight = null;
+    });
+    return this.refreshInflight;
+  }
+
+  private async refreshOnce(epochAtStart: number): Promise<CasdoorSessionView> {
+    if (!this.refreshToken) return this.status();
     try {
       const previousTenantId = this.activeTenantId;
       const endpoints = await this.discover();
       const body = new URLSearchParams({ grant_type: "refresh_token", refresh_token: this.refreshToken, client_id: this.config.clientId });
-      const secret = process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET;
-      if (secret) body.set("client_secret", secret);
+      if (this.config.clientSecret) body.set("client_secret", this.config.clientSecret);
       const response = await this.fetchWithTimeout(endpoints.token_endpoint, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body });
       const json = await response.json().catch(() => null) as Record<string, unknown> | null;
+      if (epochAtStart !== this.epoch) return this.status();
       if (!response.ok || !json || typeof json.access_token !== "string") throw new Error("Casdoor session refresh failed");
       const token: TokenResponse = {
         accessToken: json.access_token,
@@ -658,17 +724,27 @@ export class CasdoorAuthService {
       this.activeTenantId = buildCasdoorTenantContext(identity, this.activeTenantId).activeTenantId;
       this.accessToken = token.accessToken;
       if (typeof json.refresh_token === "string") this.refreshToken = json.refresh_token;
+      if (epochAtStart !== this.epoch) return this.status();
       this.expiresAt = Date.now() + (typeof json.expires_in === "number" ? json.expires_in : 3600) * 1000;
       await this.persistSession();
       this.scheduleRefresh();
       this.notifyStatusChange("refresh");
       return this.status();
     } catch (error) {
+      if (epochAtStart !== this.epoch) return this.status();
       this.lastError = error instanceof Error ? error.message : String(error);
       await this.clearSession();
       this.notifyStatusChange("session-invalidated");
       return this.status();
     }
+  }
+
+  authEpoch(): number {
+    return this.epoch;
+  }
+
+  private bumpEpoch(): void {
+    this.epoch += 1;
   }
 
   async revalidateCurrentSession(): Promise<CasdoorSessionView> {
@@ -693,12 +769,20 @@ export class CasdoorAuthService {
 
   async logout(): Promise<{ ok: true }> {
     const endpoint = this.endpoints?.end_session_endpoint;
+    const revocation = this.endpoints?.revocation_endpoint;
+    const refreshToken = this.refreshToken;
     const identity = this.identity;
     const tenantId = this.activeTenantId;
     this.lastError = undefined;
+    this.bumpEpoch();
     await this.clearSession();
     void casdoorAudit.record({ event: "logout", outcome: "success", subject: identity?.subject, tenantId });
-    if (endpoint) {
+    if (refreshToken && revocation) {
+      const body = new URLSearchParams({ token: refreshToken, token_type_hint: "refresh_token", client_id: this.config.clientId });
+      if (this.config.clientSecret) body.set("client_secret", this.config.clientSecret);
+      void this.fetchWithTimeout(revocation, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body }).catch(() => undefined);
+    }
+    if (endpoint && process.env.OPENBUDDY_CASDOOR_OPEN_END_SESSION === "1") {
       const url = new URL(endpoint);
       url.searchParams.set("post_logout_redirect_uri", this.config.redirectUri);
       await shell.openExternal(url.toString());
@@ -814,8 +898,6 @@ export class CasdoorAuthService {
 
   async authorizeResourceRemotely(request: CasdoorResourceAuthorizationRequest): Promise<boolean> {
     const status = this.status();
-    const secret = process.env.OPENBUDDY_CASDOOR_CLIENT_SECRET;
-    const enforcerId = this.config.enforcerId;
     const activeTenantId = status.tenantContext.activeTenantId;
     const input = request as unknown as Record<string, unknown> | null | undefined;
     const resource = typeof input?.resource === "string" ? input.resource.trim() : "";
@@ -834,27 +916,33 @@ export class CasdoorAuthService {
       });
       return false;
     }
-    const localAllowed = this.authorizeResource({ tenantId, resource, resourceId, action });
     if (!status.identity || status.identity.isForbidden || status.identity.isDeleted || !activeTenantId) return false;
     if (!casdoorTenantMembership(status.identity, activeTenantId)) return false;
-    if (!secret || !enforcerId) return localAllowed;
+    const origin = process.env.OPENBUDDY_BACKEND_ORIGIN?.trim();
+    const token = this.getAccessToken();
+    if (!origin || !token) {
+      void casdoorAudit.record({ event: "authorization.remote", outcome: "deny", subject: status.identity.subject, tenantId: activeTenantId, resource, action, reason: "authz_unavailable" });
+      return false;
+    }
     try {
-      const object = resourceId || resource;
-      const response = await this.fetchWithTimeout(`${this.config.issuer}/api/enforce?${new URLSearchParams({ enforcerId }).toString()}`, {
+      const domain = resource === "weknora" || resource.startsWith("knowledge") ? "knowledge" : resource === "billing" || resource === "credit" ? "billing" : resource === "project" ? "project" : resource;
+      const object = `${domain}:${resourceId || resource}`;
+      const response = await this.fetchWithTimeout(`${origin}/api/v1/authz/check`, {
         method: "POST",
         headers: {
           accept: "application/json",
           "content-type": "application/json",
-          authorization: `Basic ${Buffer.from(`${this.config.clientId}:${secret}`, "utf8").toString("base64")}`,
+          authorization: `Bearer ${token}`,
+          "X-Tenant-Id": activeTenantId,
         },
-        body: JSON.stringify([status.identity.subject, object, action]),
+        body: JSON.stringify({ checks: [{ resource: object, action }] }),
       });
-      const payload = await response.json().catch(() => null) as { status?: string; data?: unknown } | null;
-      const allowed = response.ok && payload?.status !== "error" && Array.isArray(payload?.data) && payload.data.some((value) => value === true);
-      void casdoorAudit.record({ event: "authorization.remote", outcome: allowed ? "allow" : "deny", subject: status.identity.subject, tenantId: activeTenantId, resource, action, reason: allowed ? "casbin_allow" : "casbin_deny" });
+      const payload = await response.json().catch(() => null) as { results?: Array<{ allow?: boolean }> } | null;
+      const allowed = response.ok && payload?.results?.[0]?.allow === true;
+      void casdoorAudit.record({ event: "authorization.remote", outcome: allowed ? "allow" : "deny", subject: status.identity.subject, tenantId: activeTenantId, resource, action, reason: allowed ? "authz_allow" : "authz_deny" });
       return allowed;
     } catch (error) {
-      void casdoorAudit.record({ event: "authorization.remote", outcome: "deny", subject: status.identity.subject, tenantId: activeTenantId, resource, action, reason: error instanceof Error ? error.message : "casbin_request_failed" });
+      void casdoorAudit.record({ event: "authorization.remote", outcome: "deny", subject: status.identity.subject, tenantId: activeTenantId, resource, action, reason: error instanceof Error ? error.message : "authz_request_failed" });
       return false;
     }
   }
@@ -949,6 +1037,7 @@ export class CasdoorAuthService {
       throw new Error("当前账户不属于所选租户");
     }
     this.activeTenantId = normalized;
+    this.bumpEpoch();
     void casdoorAudit.record({ event: "tenant.switch", outcome: "success", subject: status.identity.subject, tenantId: normalized });
     void this.persistSession();
     this.notifyStatusChange("tenant-switch");
@@ -957,7 +1046,7 @@ export class CasdoorAuthService {
 
   getAccessToken(): string | null {
     if (!this.identity || !this.accessToken || !this.expiresAt) return null;
-    if (this.expiresAt <= Date.now()) return null;
+    if (this.expiresAt - EXPIRY_SKEW_SECONDS * 1000 <= Date.now()) return null;
     return this.accessToken;
   }
 

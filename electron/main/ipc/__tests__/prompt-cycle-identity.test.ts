@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { IdentityContext } from "@openbuddy/shared-types";
 import { registerPromptCycleIpc } from "../prompt-cycle";
+import { forgetRuntimeBinding, rememberRuntimeBinding } from "../../runtime/runtime-router";
+import { setRuntimeSessionService } from "../../runtime/runtime-session-handle";
 
 const handlers = new Map<string, (event: unknown, input: unknown) => Promise<unknown>>();
 const prompt = vi.fn(async () => undefined);
@@ -41,6 +43,8 @@ describe("agent:prompt identity", () => {
     audits.length = 0;
     activeId = "pi";
     context = null;
+    forgetRuntimeBinding("s1");
+    setRuntimeSessionService(null);
     registerPromptCycleIpc({
       ensureAgentHost: async () => undefined,
       agentHost: {
@@ -72,11 +76,22 @@ describe("agent:prompt identity", () => {
     expect(prompt).not.toHaveBeenCalled();
   });
 
-  it("passes the context through the hermes chat request", async () => {
-    activeId = "hermes";
+  it("sends a bound hermes session through the runtime service and does not call pi", async () => {
+    const send = vi.fn(async () => ({ runId: "r", sessionId: "remote" }));
+    setRuntimeSessionService({ send } as never);
+    rememberRuntimeBinding("s1", {
+      runtimeId: "remote-hermes:h",
+      instanceId: "h",
+      remoteSessionId: "remote",
+      lastSeq: 0,
+      identityEpoch: 0,
+      state: "active",
+      createdAt: "t",
+    });
     context = allowed;
     await handlers.get("agent:prompt")?.({}, { text: "hi", sessionId: "s1" });
-    expect(chat).toHaveBeenCalledWith({ text: "hi", sessionId: "s1", identityContext: allowed });
+    expect(send).toHaveBeenCalledWith({ uiSessionId: "s1", text: "hi" });
     expect(prompt).not.toHaveBeenCalled();
+    expect(chat).not.toHaveBeenCalled();
   });
 });

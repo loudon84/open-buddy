@@ -257,7 +257,7 @@ export interface PromptComplete {
  *  - "failed": errored during send/stream
  *  - "pending": created but no message sent yet
  *  - "planning": in plan mode / awaiting plan approval */
-export type SessionStatus = "working" | "completed" | "failed" | "pending" | "planning";
+export type SessionStatus = "working" | "completed" | "failed" | "pending" | "planning" | "uncertain";
 
 export interface SessionSummary {
   sessionId: string;

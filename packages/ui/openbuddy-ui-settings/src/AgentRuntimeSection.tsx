@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@/lib/platform/electron-api";
+import { setSelectedRuntimeId } from "@/lib/runtime/selected-runtime";
 
 export interface RuntimeHealthRow {
   id: string;
@@ -35,6 +36,7 @@ export function AgentRuntimeSection() {
     setError(null);
     try {
       await invoke("platform-runtime:switch", { id });
+      setSelectedRuntimeId(id);
       await reload();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -61,14 +63,14 @@ export function AgentRuntimeSection() {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} data-active={row.active ? "true" : "false"}>
-              <td>{row.name}{row.active ? " 当前" : ""}</td>
+              <td>{row.name}{row.active ? " 新会话默认" : ""}</td>
               <td>{row.version}</td>
               <td>{row.status}</td>
               <td>{row.endpoint}</td>
               <td>{row.capabilities.map((item) => item.name).join(", ")}</td>
               <td>
                 <button type="button" data-testid={`runtime-switch-${row.id}`} disabled={row.active || busy !== null} onClick={() => void switchTo(row.id)}>
-                  切换
+                  设为新会话默认
                 </button>
               </td>
             </tr>

@@ -32,6 +32,7 @@ export interface ProductionConfigurationInput {
 
 type CapabilityEntry = { supported?: unknown; usage?: unknown; verifiedAt?: unknown };
 
+/** Q2: desktop, backend, and this gateway share one Casdoor application audience. Do not relax iss/aud/JWKS checks. */
 export function productionAudienceValid(value: string | undefined): boolean {
   return Boolean(value?.trim() && /^[a-zA-Z0-9._:-]{1,160}$/.test(value.trim()));
 }

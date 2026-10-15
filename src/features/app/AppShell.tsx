@@ -35,7 +35,6 @@ import { ChatView } from "@openbuddy/ui-conversation";
 import { EmailAiStyles } from "@openbuddy/ui-email/ai";
 import { PlaceholderPage } from "@/components/shared/PlaceholderPage";
 import { EXPERTS_ROUTE_LABEL } from "@/lib/navigation/placeholder-routes";
-import { backendAccountNotice } from "@/lib/backend-auth/backend-auth-client";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toast } from "@openbuddy/ui-primitives";
 import { Resizable } from "@openbuddy/ui-primitives";
@@ -481,7 +480,7 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
     handleLogout,
     showToast,
     handlePlaceholder,
-    backendSession,
+    enterpriseAccount,
     handleSelectEmailFromSearch,
     handleSelectKnowledgeFromSearch,
     refreshModels,
@@ -524,9 +523,9 @@ export const AppShell = memo(function AppShell({ runtime }: { runtime: AppShellR
             onNavigate={handleNavigate}
             onOpenSettings={() => openSettings()}
             onOpenSettingsSection={(section: string) => openSettings(section as SettingsSection)}
-            accountLabel={backendSession?.status === "signed_in" ? backendSession.displayName : undefined}
-            accountStatus={backendSession?.status === "signed_in" ? "signed_in" : backendSession?.status === "error" ? "error" : "signed_out"}
-            accountNotice={backendAccountNotice(backendSession)}
+            accountLabel={enterpriseAccount.label}
+            accountStatus={enterpriseAccount.status}
+            accountNotice={enterpriseAccount.notice}
             onOpenAccount={openAccountSettings}
             onLogin={handleLogin}
             onLogout={handleLogout}

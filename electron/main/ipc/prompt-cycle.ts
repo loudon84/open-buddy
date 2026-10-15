@@ -54,9 +54,8 @@ import {
   thinkingLevel,
 } from "./validation";
 import { casdoorAudit } from "../casdoor/casdoor-audit";
-import { dispatchPrompt } from "../runtime/dispatch-prompt";
-import { getPlatformRuntimeManager } from "../runtime/platform-runtime-handle";
-import { publishAssistantTurn } from "../runtime/publish-assistant-turn";
+import { policyAllows, resolveRuntimeRoute, unsupportedOnRemote } from "../runtime/runtime-router";
+import { getRuntimeSessionService } from "../runtime/runtime-session-handle";
 import type { AgentHostIpcDeps } from "./_agent-host-deps";
 
 const RUNTIME_DENIED = "当前账号无权限使用该 Agent，请切换到有权限的 Runtime。";
@@ -107,10 +106,9 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     const traceId = optionalString((typeof input === "string" ? undefined : payload?.traceId), "traceId") ?? generateTraceId();
     const identityContext = deps.getIdentityContext?.() ?? null;
     const identityFields = identityLog(identityContext);
-    const platform = getPlatformRuntimeManager();
-    const activeRuntimeId = platform?.activeId ?? "pi";
+    const route = resolveRuntimeRoute(sessionId);
     const allowed = identityContext?.policies?.agents;
-    if (allowed && !allowed.includes(activeRuntimeId)) {
+    if (allowed && !policyAllows(allowed, route.runtimeId)) {
       const denied = new Error(RUNTIME_DENIED);
       hostFailed("agent:prompt", traceId, denied, identityFields);
       throw denied;
@@ -121,22 +119,16 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
         outcome: "success",
         subject: identityContext.user.id,
         tenantId: identityContext.tenant.id,
-        detail: JSON.stringify({ runtimeId: activeRuntimeId, sessionId }),
+        detail: JSON.stringify({ runtimeId: route.runtimeId, sessionId }),
       });
     }
-    if (activeRuntimeId !== "pi") {
-      if (!platform) throw new Error("platform runtime is not installed");
+    if (route.kind === "remote") {
+      if (!sessionId) throw new Error("[INVALID_ARGUMENT] remote prompt requires sessionId");
+      const service = getRuntimeSessionService();
+      if (!service) throw new Error("[UPSTREAM_UNAVAILABLE] remote runtime is not configured");
       hostReceived("agent:prompt", traceId, sessionId, identityFields);
       try {
-        await dispatchPrompt({
-          activeRuntimeId,
-          text,
-          sessionId,
-          identityContext: identityContext ?? undefined,
-          promptPi: async () => undefined,
-          chatActive: () => platform.chat({ text, sessionId, identityContext: identityContext ?? undefined }),
-          publishAssistant: publishAssistantTurn,
-        });
+        await service.send({ uiSessionId: sessionId, text });
         hostDispatched("agent:prompt", traceId, sessionId, identityFields);
         return { ok: true };
       } catch (err) {
@@ -168,6 +160,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     }
   });
   ipcMain.handle("agent:steer", async (_e, input: { sessionId?: string; text: string; traceId?: string }) => {
+    const blocked = unsupportedOnRemote("agent:steer", resolveRuntimeRoute(input?.sessionId));
+    if (blocked) throw blocked;
     await ensureAgentHost();
     const payload = recordValue(input, "agent:steer payload");
     const sessionId = payload.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
@@ -191,6 +185,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     }
   });
   ipcMain.handle("agent:follow-up", async (_e, input: { sessionId?: string; text: string; traceId?: string }) => {
+    const blocked = unsupportedOnRemote("agent:follow-up", resolveRuntimeRoute(input?.sessionId));
+    if (blocked) throw blocked;
     await ensureAgentHost();
     const payload = recordValue(input, "agent:follow-up payload");
     const sessionId = payload.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
@@ -214,6 +210,14 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     }
   });
   ipcMain.handle("agent:abort", async (_e, input?: { sessionId?: string; traceId?: string }) => {
+    const earlyId = typeof input?.sessionId === "string" ? input.sessionId : undefined;
+    const route = resolveRuntimeRoute(earlyId);
+    if (route.kind === "remote") {
+      if (!earlyId) throw new Error("[INVALID_ARGUMENT] remote abort requires sessionId");
+      const service = getRuntimeSessionService();
+      if (!service) throw new Error("[UPSTREAM_UNAVAILABLE] remote runtime is not configured");
+      return service.cancel(earlyId);
+    }
     await ensureAgentHost();
     let sessionId: string | undefined;
     const traceId = optionalString(input?.traceId, "traceId") ?? generateTraceId();
@@ -240,6 +244,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     }
   });
   ipcMain.handle("agent:set-model", async (_e, input: string | { sessionId?: string; modelId: string; traceId?: string }) => {
+    const blocked = unsupportedOnRemote("agent:set-model", resolveRuntimeRoute(typeof input === "string" ? undefined : input?.sessionId));
+    if (blocked) throw blocked;
     await ensureAgentHost();
     const payload = typeof input === "string" ? undefined : recordValue(input, "agent:set-model payload");
     const sessionId = payload?.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
@@ -268,6 +274,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
   // ─────────────────────────────────────────────────────────────────
 
   ipcMain.handle("agent:compact", async (_e, input?: { sessionId?: string; customInstructions?: string; traceId?: string }) => {
+    const blocked = unsupportedOnRemote("agent:compact", resolveRuntimeRoute(input?.sessionId));
+    if (blocked) throw blocked;
     await ensureAgentHost();
     const payload = input === undefined ? {} : recordValue(input, "agent:compact payload");
     const sessionId = payload.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
@@ -382,6 +390,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
     }
   });
   ipcMain.handle("agent:fork-session", async (_e, input: { sessionId?: string; entryId: string; traceId?: string }) => {
+    const blocked = unsupportedOnRemote("agent:fork-session", resolveRuntimeRoute(input?.sessionId));
+    if (blocked) throw blocked;
     await ensureAgentHost();
     const payload = recordValue(input, "agent:fork-session payload");
     const sessionId = payload.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
@@ -419,6 +429,8 @@ export function registerPromptCycleIpc(deps: AgentHostIpcDeps): void {
   }) => {
     const payload = recordValue(input, "agent:prompt-content payload");
     const sessionId = payload.sessionId === undefined ? undefined : requiredString(payload.sessionId, "sessionId");
+    const blocked = unsupportedOnRemote("agent:prompt-content", resolveRuntimeRoute(sessionId));
+    if (blocked) throw blocked;
     if (sessionId !== undefined && sessionId !== agentHost.getSession()?.sessionId) throw new Error(`Pi session is not loaded: ${sessionId}`);
     const traceId = optionalString(payload.traceId, "traceId") ?? generateTraceId();
     const content = promptContent(payload.content, "content");

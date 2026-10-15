@@ -179,7 +179,7 @@ describe("casdoor IPC dispatch 真实端到端", () => {
       const identity = result.identity as Record<string, unknown>;
       expect(identity.subject).toBe("user-1");
       expect(identity.isAdmin).toBe(true);
-      expect((identity.capabilities as string[])).toContain("admin.portal");
+      expect(identity.capabilities).toBeUndefined();
     });
 
     it("casdoor:workbench-summary 在无身份时返回 identity=null", async () => {

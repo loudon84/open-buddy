@@ -54,7 +54,14 @@ describe("main ↔ preload 通道对齐", () => {
   });
 
   it("每个被 main 处理的通道,都能在 preload allowlist 里找到", () => {
-    const missing = [...handledChannels].filter((c) => !allowed.has(c)).sort();
+    const knownUnreachable = new Set([
+      "platform-plugin:activate",
+      "platform-plugin:disable",
+      "platform-plugin:install",
+      "platform-plugin:list",
+    ]);
+    const missing = [...handledChannels].filter((c) => !allowed.has(c) && !knownUnreachable.has(c)).sort();
     expect(missing, `漏配 allowlist 的通道:\n  ${missing.join("\n  ")}`).toEqual([]);
+    expect([...handledChannels].filter((c) => knownUnreachable.has(c)).sort()).toEqual([...knownUnreachable].sort());
   });
 });

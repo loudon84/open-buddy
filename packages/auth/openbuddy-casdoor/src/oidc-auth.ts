@@ -238,9 +238,9 @@ export function isCasdoorCallbackUrl(callbackUrl: string, redirectUri: string): 
     return callback.protocol === expected.protocol
       && callback.host === expected.host
       && callback.pathname === expected.pathname
+      && callback.port === expected.port
       && !callback.username
-      && !callback.password
-      && !callback.port;
+      && !callback.password;
   } catch {
     return false;
   }

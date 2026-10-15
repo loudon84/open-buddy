@@ -32,6 +32,7 @@ export class PiAdapter implements RuntimeAdapter {
   async health(): Promise<RuntimeHealth> {
     try {
       if (!this.port.installationId) throw new Error("pi port is unavailable");
+      if (this.port.bound === false) throw new Error("pi port is not bound");
       await this.engine.connect({ endpointRef: PI_ENDPOINT, credentialRef: "", scope: this.scope });
       return { status: "healthy", version: "embedded", endpoint: PI_ENDPOINT };
     } catch (error) {

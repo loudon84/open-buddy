@@ -68,11 +68,7 @@ export function registerCasdoorIpc(getWindow: () => BrowserWindow | null): void 
 				phone: status.identity.phone,
 				organizations: status.identity.organizations,
 				roles: status.identity.roles,
-				groups: status.identity.groups,
-				permissions: status.identity.permissions,
-				capabilities: status.identity.capabilities,
 				isAdmin: status.identity.isAdmin,
-				customFields: status.identity.customFields,
 			} : null;
 			return {
 				status: status.status,

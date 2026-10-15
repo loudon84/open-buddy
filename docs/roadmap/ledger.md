@@ -1,7 +1,7 @@
 # Roadmap ledger
 
 Branch: `roadmap/enterprise-agent-os`  
-Updated: 2026-10-12  
+Updated: 2026-10-15  
 Rule: one Task per session, in the order below. A Task starts only after every dependency is `done` or `done-fixture`.
 
 Status values: `pending`, `in-progress`, `done`, `done-fixture`, `blocked`. See [WORKFLOW.md](WORKFLOW.md).
@@ -28,13 +28,15 @@ The 2026-10-12 branch review and its remediation are in [review-2026-10-12.md](r
 
 | Gate | Missing environment | Tasks that may end done-fixture |
 | --- | --- | --- |
-| D03 | Authorized Hermes staging | P0-03, P1-02, P1-07, P1-08 |
+| D03 | Authorized Hermes staging | P0-03, P1-02, P1-07, P1-08, GW-01, RA-09, RA-10 (AC-RA-14) |
 | D04 | Knowledge service with ACL, version, delete | P4A-01, P4A-03, P4A-07 |
 | D05 | Approved sites and credential policy | P4B-02, P4B-04, P4B-06 |
 | D06 | Real CRM fields and approval | P4C-01, P4C-04, P4C-05 |
 | D07 | Signed metrics and data source | P4D-01, P4D-04 |
 | D08 | ERP connector and quote approval | P4E-01, P4E-03, P4E-04 |
 | D11 | Measured capacity hardware | P1-08 and any production SLA claim |
+| D13 | Internal Casdoor desktop app (public client + PKCE) and callback allowlist | ID-02 real login |
+| D15 | nodeskclaw-backend identity context and authz (BE-01) | ID-05, ID-08 real acceptance |
 
 ## Tasks
 
@@ -51,9 +53,29 @@ The 2026-10-12 branch review and its remediation are in [review-2026-10-12.md](r
 | P1-03 | P1-02 | done | specs/P1-03-remote-transport/evidence.md | Full RemoteHermesAdapter; loopback main chain test; token not logged |
 | P1-04 | P1-02 | done | specs/P1-04-command-log/evidence.md | Receipts scoped by tenant, workspace, operation, resource; one terminal |
 | P1-05 | P1-01, P1-03, P1-04 | done | specs/P1-05-session-projection/evidence.md | Duplicate seq, gap, snapshot, separate runtimes |
-| P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Dock mounted behind gateway URL; main-owned controller and IPC; not run in a packaged window |
+| P1-06 | P1-05 | done | specs/P1-06-runtime-panel/evidence.md | Historical note corrected 2026-10-15: EnterpriseRuntimeDock is not mounted in App.tsx; panel is unit-tested only |
 | P1-07 | P1-06 | done-fixture | specs/P1-07-runtime-faults/evidence.md | Upstream 500 fixture; D03 not probed |
 | P1-08 | P1-07 | done-fixture | specs/P1-08-runtime-operations/evidence.md | Flag rollback drill; no deploy; D11 unmeasured |
+| ID-02 | — | done-fixture | specs/identity-casdoor-unify/evidence.md | Epoch, single-flight, skew; real Casdoor login waits on D13 |
+| ID-03 | ID-02 | done-fixture | specs/identity-casdoor-unify/evidence.md | Loopback redirect accepted; not exercised against internal Casdoor |
+| ID-04 | ID-02 | done | specs/identity-casdoor-unify/evidence.md | Port feeds enterprise/platform runtime; dispose on identity change |
+| ID-05 | ID-02 | done-fixture | specs/identity-casdoor-unify/evidence.md | Casdoor token + X-Tenant-Id; live context waits on D15 |
+| ID-06 | ID-04, ID-05 | done | specs/identity-casdoor-unify/evidence.md | Sidebar follows identity:mode; backend mode still available |
+| ID-07 | ID-06 | done-fixture | specs/identity-casdoor-unify/evidence.md | Local session cleanup once; backend-auth sources kept until zero consumers |
+| ID-08 | ID-05 | done-fixture | specs/identity-casdoor-unify/evidence.md | Authz check fail-closed without backend; D15 for a real PDP |
+| GW-01 | — | done-fixture | specs/identity-casdoor-unify/evidence.md | JWT verify unit; staging waits on D03 |
+| GW-02 | — | done | specs/identity-casdoor-unify/evidence.md | Audience checks unchanged; shared aud noted |
+| RA-00 | — | done | specs/runtime-adapter-converge/evidence.md | Contract split only; no behavior change in this row's types |
+| RA-01 | RA-00 | done | specs/runtime-adapter-converge/evidence.md | platform-runtime invoke allowlisted; platform-plugin still blocked |
+| RA-02 | RA-00 | done | specs/runtime-adapter-converge/evidence.md | Pi binding flag, AbortSignal, runId check; fixture |
+| RA-03 | RA-00 | done | specs/runtime-adapter-converge/evidence.md | Immutable runtime binding in session_bindings |
+| RA-04 | RA-02, RA-03 | done | specs/runtime-adapter-converge/evidence.md | Mutating agent channels follow the session binding |
+| RA-05 | RA-03, RA-04 | done-fixture | specs/runtime-adapter-converge/evidence.md | One remote session, loopback only; D03 unprobed |
+| RA-06 | RA-05 | done-fixture | specs/runtime-adapter-converge/evidence.md | Renderer projector and cancel-pending; Pi path kept |
+| RA-07 | RA-05 | done-fixture | specs/runtime-adapter-converge/evidence.md | Capabilities from gateway; missing features are false |
+| RA-08 | RA-06 | done | specs/runtime-adapter-converge/evidence.md | collectChat and synthetic pi complete removed from the prompt path |
+| RA-09 | RA-05 | done-fixture | specs/runtime-adapter-converge/evidence.md | workspace check and body limit; staging verify waits on D03 |
+| RA-10 | RA-06 | done-fixture | specs/runtime-adapter-converge/evidence.md | Dev-window staging not claimed; AC-RA-14 blocked on D03 |
 | P2-01 | P1-08 | done | specs/P2-01-workspace-model/evidence.md | Membership rows; Pi history not migrated |
 | P2-02 | P2-01 | done | specs/P2-02-authorization/evidence.md | D01 grants; admin is not an implicit document read |
 | P2-03 | P2-02 | done | specs/P2-03-directory-api/evidence.md | No self-promotion; stale revision 409 |

@@ -214,7 +214,6 @@ const NAV_GROUPS: NavGroup[] = [
     icon: User,
     collapsedByDefault: true,
     items: [
-      { id: "enterprise-login", label: "企业登录", icon: User },
       { id: "account", label: "账户管理", icon: User },
       { id: "members", label: "租户成员", icon: Users },
       { id: "linking", label: "账号绑定", icon: Link2 },

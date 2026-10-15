@@ -143,6 +143,15 @@ export class SessionCatalog {
     return rows.map(fromRow);
   }
 
+  getBinding(sessionId: string, bindingType: string): { bindingId: string; metadata: Record<string, unknown> } | null {
+    const row = this.driver.database.prepare(
+      `SELECT binding_id, metadata_json FROM session_bindings WHERE session_id = ? AND binding_type = ?`,
+    ).get(sessionId, bindingType) as { binding_id: string; metadata_json: string } | undefined;
+    if (!row) return null;
+    const metadata = JSON.parse(row.metadata_json || "{}") as Record<string, unknown>;
+    return { bindingId: row.binding_id, metadata };
+  }
+
   setBinding(sessionId: string, bindingType: string, bindingId: string, metadata: Record<string, unknown> = {}): void {
     this.driver.runExclusiveSync((database) => database.prepare(`
       INSERT INTO session_bindings(session_id, binding_type, binding_id, metadata_json, updated_at)

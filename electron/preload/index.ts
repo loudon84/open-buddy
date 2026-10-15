@@ -64,7 +64,7 @@ const allowedInvokeChannels = new Set([
   "casdoor:unlink-account", "casdoor:user-add", "casdoor:user-delete", "casdoor:user-invite", "casdoor:user-update", "casdoor:wallet-credits", "casdoor:wallet-ledger", "casdoor:wallet-select",
   "casdoor:wallet-selected", "casdoor:wallets-list", "casdoor:webhook-deliver", "casdoor:webhook-subscription-list", "casdoor:webhook-subscription-update", "casdoor:weknora-token-exchange", "casdoor:workbench-summary",
   "backend-auth:status", "backend-auth:origin-save", "backend-auth:login", "backend-auth:cancel", "backend-auth:refresh", "backend-auth:logout", "backend-auth:test-connection",
-  "identity:context", "identity:refresh",
+  "identity:mode", "identity:context", "identity:refresh",
   // collaboration
   "collaboration:a2a-agent-card", "collaboration:a2a-task-get", "collaboration:a2a-task-submit", "collaboration:ack-inbox", "collaboration:approval-decide", "collaboration:approval-request", "collaboration:delegation-grant", "collaboration:delegation-revoke",
   "collaboration:execute", "collaboration:federated-grant-issue", "collaboration:federated-grant-revoke", "collaboration:federated-grants", "collaboration:identity-get", "collaboration:identity-update", "collaboration:network-agreement-revoke", "collaboration:network-award",
@@ -128,6 +128,8 @@ const allowedInvokeChannels = new Set([
   // enterprise remote runtime (P1-06)
   "enterprise-runtime:status", "enterprise-runtime:connect", "enterprise-runtime:create-session", "enterprise-runtime:send",
   "enterprise-runtime:cancel", "enterprise-runtime:decide", "enterprise-runtime:subscribe", "enterprise-runtime:unsubscribe",
+  "platform-runtime:list", "platform-runtime:health", "platform-runtime:switch",
+  "runtime-session:create", "runtime-session:attach", "runtime-session:capabilities", "runtime-session:decide",
   // workbuddy
   "workbuddy_import_confirm", "workbuddy_import_preview", "workbuddy_import_rollback", "workbuddy_import_status",
   // other
@@ -156,6 +158,8 @@ const allowedEventChannels = new Set([
   "openbuddy://collaboration-update",
   "openbuddy://pi-stream-port",
   "openbuddy://enterprise-runtime",
+  "runtime://event",
+  "identity://changed",
   "dsh://rpc",
   "pi://event",
   "pi://update",

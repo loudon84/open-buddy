@@ -149,6 +149,7 @@ import { WorkspaceOrderInvalidError } from "../deepseek/deepseek-runtime";
 import { markPluginTransactionRolledBack, PluginLifecycleQueue, type PluginTransactionContext } from "./plugin-lifecycle";
 import { PiRuntimeCoordinator } from "./pi-runtime-coordinator";
 import { PiSessionRuntime } from "./pi-session-runtime";
+import { installPlatformPiBinding } from "../runtime/runtime-registry";
 import { SessionAttachmentStore, type StoredSessionAttachment } from "../session/session-attachments";
 // Phase L.1 — DSH Pi bridge moved into `host-modules/deepseek/cordis-runtime.ts`;
 // only the protocol/capability constants survive (they're the IPC-visible
@@ -280,6 +281,20 @@ const {
 } = profileFacade;
 
 const piSessionRuntime = new PiSessionRuntime();
+installPlatformPiBinding(piSessionRuntime, {
+  continueSession: async (sessionPath) => ({
+    sessionId: piSessionRuntime.session?.sessionId ?? "pi-desktop",
+    sessionPath,
+  }),
+  send: async (text) => {
+    const session = piSessionRuntime.session;
+    if (!session) throw new Error("pi session is not ready");
+    await session.prompt(text);
+    return { runId: session.sessionId };
+  },
+  subscribe: (listener) => piSessionRuntime.subscribe((event) => listener(event as never)),
+  respondPermission: async () => undefined,
+});
 
 const piRuntimeCoordinator = new PiRuntimeCoordinator({
   getSession: () => piSessionRuntime.session,

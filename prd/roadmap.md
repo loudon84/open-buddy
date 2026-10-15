@@ -951,6 +951,145 @@ Phase0（P0四主线契约/基线）
 - **验证命令/方法**：已有：`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm build`、`pnpm test:electron`、`pnpm enterprise:release-audit`、`pnpm tenant:boundary-audit`、`pnpm eval:acceptance`；待建：`pnpm test:enterprise-journey -- --profile=staging`。
 - **完成证据 / 回滚**：保存§3规定的证据包；本Task Acceptance全部通过方关闭。回退本task增量与feature flag，遵守Phase 4E数据/外部副作用回滚限制，不撤销他人改动。
 
+<a id="identity-casdoor"></a>
+## 企业身份统一（Casdoor 直连）
+
+依据：[prd/new-sitemap2/OpenBuddy_Enterprise_Identity_Casdoor_Unification_PRD_v1.0.md](new-sitemap2/OpenBuddy_Enterprise_Identity_Casdoor_Unification_PRD_v1.0.md)、冻结契约 v1.1、decisions.md D13–D17。外部 nodeskclaw-backend（BE-01～03）不在本仓库实现；缺该环境时相关验收记 `done-fixture`。
+
+<a id="ID-02"></a>
+##### Task ID-02：casdoorAuth 加固与配置收口
+
+- **目标 / PRD**：REQ-CU-01、REQ-CU-02、REQ-CU-04、REQ-CU-05、REQ-CU-06
+- **依赖**：ID-00 已登记。
+- **Acceptance**：refresh 单飞；临近过期按 skew 视为过期；token 交换与刷新有界超时且不发送 client secret；login/logout/切租户/issuer 变更递增 epoch，迟到响应不落盘；退出先本地失效。
+
+<a id="ID-03"></a>
+##### Task ID-03：回调与多租户
+
+- **目标 / PRD**：REQ-CU-03、REQ-CU-07。Q1 默认 loopback 优先、`casdoor://` 兼容一版；Q3 沿用现有 JWT claims 解析。
+- **依赖**：[ID-02](#ID-02)
+- **Acceptance**：重复或错误来源回调拒绝；单租户自动选中；多租户可切换；请求可带 `X-Tenant-Id`。
+
+<a id="ID-04"></a>
+##### Task ID-04：EnterpriseIdentityPort 与运行时接入
+
+- **目标 / PRD**：REQ-CU-30～REQ-CU-33
+- **依赖**：[ID-02](#ID-02)
+- **Acceptance**：企业/平台运行时与 workbench scope 只经端口取身份；退出或切租户 dispose 运行时；迟到事件按 epoch 丢弃。
+
+<a id="ID-05"></a>
+##### Task ID-05：IdentityService 改用 Casdoor token
+
+- **目标 / PRD**：REQ-CU-20～REQ-CU-25
+- **依赖**：[ID-02](#ID-02)；真实验收依赖外部 BE-01
+- **Acceptance**：身份上下文用 Casdoor token 与 `X-Tenant-Id`；缓存绑定 issuer/subject/tenant/epoch；本地 Pi 的空 authorize 不再拦截；workbench-summary 不含 permissions/capabilities 原文。无 backend 时 `done-fixture`。
+
+<a id="ID-06"></a>
+##### Task ID-06：侧栏与设置入口切换
+
+- **目标 / PRD**：REQ-CU-10～REQ-CU-13、REQ-CU-40 第一步
+- **依赖**：[ID-04](#ID-04)、[ID-05](#ID-05)
+- **Acceptance**：侧栏登录/退出走 Casdoor；审计事件名为 `casdoor.login` / `casdoor.logout`；`OPENBUDDY_IDENTITY_MODE=backend` 可回退旧入口；本阶段不删除旧会话。
+
+<a id="ID-07"></a>
+##### Task ID-07：升级清理与 backend-auth 退役
+
+- **目标 / PRD**：REQ-CU-40～REQ-CU-43
+- **依赖**：[ID-06](#ID-06) 且零消费者确认
+- **Acceptance**：casdoor 模式下首次启动清理 `backend-auth` 会话与企业 OAuth 分区；死 import 清除。源码删除仅在零消费者之后，删除后不可回滚。
+
+<a id="ID-08"></a>
+##### Task ID-08：enforcer 迁移
+
+- **目标 / PRD**：REQ-CU-62、REQ-CU-63
+- **依赖**：[ID-05](#ID-05)；真实验收依赖 BE-01 `/api/v1/authz/check`
+- **Acceptance**：项目/计费/WeKnora 远端授权走 backend；无 backend 时 fail closed；桌面端不再用 client secret 调 `/api/enforce`。无 backend 时 `done-fixture`。
+
+<a id="GW-01"></a>
+##### Task GW-01：Hermes 网关生产 verify
+
+- **目标 / PRD**：REQ-CU-60、D17
+- **依赖**：契约 v1.1；真实 staging 依赖 D03
+- **Acceptance**：伪造、过期、错误 aud 的 token 不通过；静态 token 表仅限测试。无 staging 时 `done-fixture`。
+
+<a id="GW-02"></a>
+##### Task GW-02：resource-gateway audience 对齐
+
+- **目标 / PRD**：REQ-CU-61、Q2（首期共用一个应用 aud）
+- **依赖**：契约 v1.1
+- **Acceptance**：校验仍要求 Casdoor iss/aud/JWKS；现有资源与计费回归不放宽。
+
+<a id="runtime-adapter"></a>
+## Runtime Adapter 会话收敛
+
+依据：[prd/new-sitemap2/OpenBuddy_Runtime_Adapter_Session_Convergence_PRD_v1.0.md](new-sitemap2/OpenBuddy_Runtime_Adapter_Session_Convergence_PRD_v1.0.md)、decisions.md D18–D21。无 Hermes staging 时验收记 `done-fixture`，AC-RA-14 挂 D03。
+
+<a id="RA-00"></a>
+##### Task RA-00：契约分层
+
+- **依赖**：无。
+- **Acceptance**：`RuntimeAdapter` 为 `RuntimeConnection & RuntimeSessionPort`；新增 `RuntimeStatus` 与 feature 位；`runtime-core` 的阶段类型改名为 `RuntimeLifecyclePhase`；不改变现有调用行为。
+
+<a id="RA-01"></a>
+##### Task RA-01：平台 Runtime IPC 可达
+
+- **依赖**：[RA-00](#RA-00)
+- **Acceptance**：preload 放行 `platform-runtime:list/health/switch`；`platform-plugin:*` 仍拒绝；切换表示新会话默认。
+
+<a id="RA-02"></a>
+##### Task RA-02：Pi 真实绑定与取消信号
+
+- **依赖**：[RA-00](#RA-00)
+- **Acceptance**：未绑定不报 healthy；`agent:prompt` 的 AbortSignal 会中止 Pi；`cancel` 校验 runId。
+
+<a id="RA-03"></a>
+##### Task RA-03：会话 Runtime 绑定
+
+- **依赖**：[RA-00](#RA-00)
+- **Acceptance**：绑定写入 `session_bindings` 且不可变；无记录视为 `local-pi`。
+
+<a id="RA-04"></a>
+##### Task RA-04：按绑定路由
+
+- **依赖**：[RA-02](#RA-02)、[RA-03](#RA-03)
+- **Acceptance**：变更类 `agent:*` 按会话绑定路由；不支持返回 `UNSUPPORTED_CAPABILITY`；`policies.agents` 覆盖这些操作。
+
+<a id="RA-05"></a>
+##### Task RA-05：远端单栈
+
+- **依赖**：[RA-03](#RA-03)、[RA-04](#RA-04)
+- **Acceptance**：远端会话只创建一次；同一 SessionRef 发送与取消；无 2 秒总超时；身份 epoch 变化丢弃迟到事件。无 staging 时 `done-fixture`。
+
+<a id="RA-06"></a>
+##### Task RA-06：Renderer 投影与取消
+
+- **依赖**：[RA-05](#RA-05)
+- **Acceptance**：远端事件按 seq 去重投影；取消进入 pending，超时标 uncertain；Local Pi 仍走 `pi-client`。
+
+<a id="RA-07"></a>
+##### Task RA-07：能力协商
+
+- **依赖**：[RA-05](#RA-05)
+- **Acceptance**：能力来自 Gateway；缺失字段按 false。
+
+<a id="RA-08"></a>
+##### Task RA-08：退役旧桥
+
+- **依赖**：[RA-06](#RA-06)
+- **Acceptance**：生产 prompt 路径不再调用 `collectChat` 或合成 `pi://complete`。
+
+<a id="RA-09"></a>
+##### Task RA-09：Gateway 补强
+
+- **依赖**：[RA-05](#RA-05)
+- **Acceptance**：跨 workspace 403；超限 413；`main.ts` 装配 Casdoor verify。常驻 SSE 不做（D21）。
+
+<a id="RA-10"></a>
+##### Task RA-10：验收与纠偏
+
+- **依赖**：[RA-06](#RA-06)
+- **Acceptance**：受影响测试与 typecheck 记录在 evidence；P1-06 挂载描述已纠偏；AC-RA-14 保持 D03 阻塞。
+
 ## 5. Cursor执行提示（自包含）
 
 每次从依赖已满足的一个Task开始；建议一次工作单元覆盖一个可测试行为，较大Task先按schema→实现→错误/恢复→集成拆成小提交，但保持Task验收完整。Cursor可以使用已有技能/子代理；本计划不依赖Codex专用工具或预装技能。

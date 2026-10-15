@@ -12,7 +12,6 @@ import { agentHost, bindRendererEventEmitter, ensureAgentHostLoaded } from "./ag
 import { readKnowledgeSources, readNotifyChannels, readPolicyConfig, readStorageSources, readSubagentsConfig, writeKnowledgeSources, writeNotifyChannels, writePolicyConfig, writeSubagentsConfig } from "../agent/pi-resources";
 import type { OpenBuddySubagentsConfig } from "../agent/pi-resources";
 import { dispatchMainNotifications } from "../notifications";
-import { casdoorAuth } from "../casdoor/casdoor-auth";
 import {
 	absolutePath,
 	assertPolicyModelAllowed,
@@ -203,7 +202,6 @@ export function registerMiscIpc(getWindow: () => BrowserWindow | null): void {
 		});
 		wrapIpcHandler("memory_flush", async () => null);
 		wrapIpcHandler("subagents:get-config", async () => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			return readSubagentsConfig();
 		});
 		// Stub channels for legacy / 3rd-party IPC keep preload allowlist in sync.
@@ -260,7 +258,6 @@ export function registerMiscIpc(getWindow: () => BrowserWindow | null): void {
 		wrapIpcHandler("notifications:mark-all-read", async () => null);
 		wrapIpcHandler("notifications:mark-read", async () => null);
 		wrapIpcHandler("subagents:set-config", async (_e, args: unknown) => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			const input = recordValue(args, "subagents set-config payload");
 			const patch: OpenBuddySubagentsConfig = {};
 			if (input.maxDepth !== undefined) patch.maxDepth = optionalFiniteInteger(input.maxDepth, "maxDepth", 1, 1, 8);
@@ -536,25 +533,21 @@ export function registerMiscIpc(getWindow: () => BrowserWindow | null): void {
 			return calendarHandlers.remove(requiredString(id, "id"));
 		});
 		wrapIpcHandler("permission:list", async () => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			await ensureAgentHost();
 			const { permissionHandlers } = await import("@openbuddy/auth-permission");
 			return permissionHandlers.readRules();
 		});
 		wrapIpcHandler("permission:save", async (_e, rules: unknown) => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			await ensureAgentHost();
 			const { permissionHandlers } = await import("@openbuddy/auth-permission");
 			return permissionHandlers.writeRules(permissionRules(rules) as never);
 		});
 		wrapIpcHandler("permission:mode-get", async () => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			await ensureAgentHost();
 			const { permissionHandlers } = await import("@openbuddy/auth-permission");
 			return fromPiPermissionMode(await permissionHandlers.readMode());
 		});
 		wrapIpcHandler("permission:mode-set", async (_e, mode: unknown) => {
-			casdoorAuth.authorize({ capability: "team.workspace" });
 			await ensureAgentHost();
 			const { permissionHandlers } = await import("@openbuddy/auth-permission");
 			return permissionHandlers.writeMode(toPiPermissionMode(publicPermissionMode(mode)));

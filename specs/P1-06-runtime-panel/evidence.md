@@ -27,3 +27,7 @@ Desktop wiring (review 2026-10-12):
 - The dock is a separate surface; the main chat composer still talks to local Pi only.
 - `scripts/electron/audit-agent-surface.mjs` still exits 1 for failures that existed before this change.
 - D03 is unprobed; the upstream in tests is a loopback fixture.
+
+## Correction (2026-10-15)
+
+The sentence above that says `EnterpriseRuntimeDock` is mounted in `App.tsx` is not true of the current tree. The dock component and its unit test exist, and main still owns the enterprise runtime controller, but `App.tsx` does not mount the dock. This note does not rewrite the 2026-10-12 record.

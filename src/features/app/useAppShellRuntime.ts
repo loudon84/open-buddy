@@ -38,11 +38,13 @@ import { getStoredThemeName, useTheme } from "@openbuddy/ui-theme/client";
 import { clearRequestedMarketTab, requestMarketTab } from "@/lib/navigation/market-tab";
 import { useAgentSession } from "@/hooks/useAgentSession";
 import { useOptimisticNewSession } from "@/hooks/useOptimisticNewSession";
+import { getSelectedRuntimeId, sendRuntimeTurn } from "@/lib/runtime/session-client";
 import { newSessionFlow, composeDiscoverBody } from "@/lib/agent/new-session-flow";
 import { abandonInFlightStream } from "@/lib/agent/abandon-stream";
-import { listenSafe, isElectronBridgeUnavailable, getElectronBridgeStatus } from "@/lib/platform/electron-api";
+import { listenSafe, isElectronBridgeUnavailable, getElectronBridgeStatus, invoke } from "@/lib/platform/electron-api";
 import { friendlyError } from "@/lib/platform/error-format";
-import { backendAuthLogin, backendAuthLogout, backendAuthStatus, type BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
+import { backendAccountNotice, backendAuthLogin, backendAuthLogout, backendAuthStatus, type BackendAuthView } from "@/lib/backend-auth/backend-auth-client";
+import type { CasdoorSessionView } from "@/lib/casdoor/casdoor-client";
 import { startEnterpriseLogin } from "./start-enterprise-login";
 import { auditRecord } from "@/lib/audit/audit-client";
 import type { CasdoorLifecycleEvent } from "@openbuddy/auth-casdoor";
@@ -110,6 +112,8 @@ export function useAppShellRuntime(): AppShellRuntime {
   // R9.x — casdoorSession 状态保留,但不再驱动侧栏底部的「企业登录」按钮;
   //   后续「设置 → 账户」页面按需启用时只需 setCasdoorSession(...) 即可。
   const [backendSession, setBackendSession] = useState<BackendAuthView | null>(null);
+  const [casdoorSession, setCasdoorSession] = useState<CasdoorSessionView | null>(null);
+  const [identityMode, setIdentityMode] = useState<"casdoor" | "backend">("casdoor");
   const [searchOpen, setSearchOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   // R23 — 「发送反馈」卡是否打开。触发点在左下角账户菜单(ui-sidebar),
@@ -245,6 +249,23 @@ export function useAppShellRuntime(): AppShellRuntime {
   }, [setToast]);
 
   // ====== Casdoor ============================================================
+  useEffect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void invoke<{ mode?: string }>("identity:mode").then((result) => {
+      if (!disposed && result.mode === "backend") setIdentityMode("backend");
+    }).catch(() => undefined);
+    void import("@/lib/casdoor/casdoor-client").then(({ casdoorStatus }) => casdoorStatus()).then((status) => {
+      if (!disposed) setCasdoorSession(status);
+    }).catch(() => undefined);
+    void listenSafe<CasdoorSessionView>("casdoor://auth", (event) => {
+      if (!disposed) setCasdoorSession(event.payload);
+    }, () => notifyBridgeUnavailable()).then((cleanup) => {
+      if (disposed) cleanup?.(); else unlisten = cleanup ?? undefined;
+    });
+    return () => { disposed = true; unlisten?.(); };
+  }, [notifyBridgeUnavailable]);
+
   useEffect(() => {
     void backendAuthStatus().then(setBackendSession).catch(() => setBackendSession(null));
     let disposed = false;
@@ -537,6 +558,21 @@ export function useAppShellRuntime(): AppShellRuntime {
 
   const handleLogin = useCallback(() => {
     void (async () => {
+      const mode = await invoke<{ mode?: string }>("identity:mode").catch(() => ({ mode: "casdoor" as const }));
+      if (mode.mode !== "backend") {
+        const { casdoorLogin, casdoorStatus } = await import("@/lib/casdoor/casdoor-client");
+        const status = await casdoorStatus().catch(() => null);
+        if (!status?.config.configured) {
+          openSettings("account");
+          window.dispatchEvent(new CustomEvent("openbuddy:casdoor-config"));
+          setToast("请先配置 Casdoor");
+          return;
+        }
+        const result = await casdoorLogin("default");
+        setToast(result.ok ? "已打开 Casdoor 登录" : result.error);
+        void auditRecord({ event: "casdoor.login", outcome: result.ok ? "success" : "failure" }).catch(() => undefined);
+        return;
+      }
       const view = await backendAuthStatus().catch(() => null);
       await startEnterpriseLogin({
         origin: view?.origin ?? "",
@@ -553,7 +589,13 @@ export function useAppShellRuntime(): AppShellRuntime {
 
   const handleLogout = useCallback(async () => {
     try {
-      await backendAuthLogout();
+      const mode = await invoke<{ mode?: string }>("identity:mode").catch(() => ({ mode: "casdoor" as const }));
+      if (mode.mode !== "backend") {
+        const { casdoorLogout } = await import("@/lib/casdoor/casdoor-client");
+        await casdoorLogout();
+      } else {
+        await backendAuthLogout();
+      }
       setBackendSession(null);
       setToast("已退出企业账户");
       void auditRecord({
@@ -609,6 +651,10 @@ export function useAppShellRuntime(): AppShellRuntime {
     const pendingExpert = usePendingExpertStore.getState().expert;
     if (pendingExpert && pendingExpert.prompt) usePendingExpertStore.getState().clear();
     try {
+      if (getSelectedRuntimeId() !== "local-pi") {
+        await sendRuntimeTurn(pendingId, text);
+        return;
+      }
       await newSessionFlow({
         pendingId, promise, text, content: content ? optimisticContent : undefined, cwd: cwdRef.current,
         flowDeps: {
@@ -683,13 +729,17 @@ export function useAppShellRuntime(): AppShellRuntime {
 
   const handleCancel = useCallback(async () => {
     if (!currentSessionId) return;
-    try { await piCancel(currentSessionId); } catch (e) {
+    const sessionId = currentSessionId;
+    sessionsStore.getState().upsert({ sessionId, status: "pending" });
+    try { await piCancel(sessionId); } catch (e) {
       sessionStore.getState().setError(friendlyError(e));
       if (isElectronBridgeUnavailable(e)) notifyBridgeUnavailable();
-    } finally {
-      abandonInFlightStream({ sessionId: currentSessionId, reason: "用户取消", status: "completed" });
     }
-  }, [currentSessionId, sessionStore, notifyBridgeUnavailable]);
+    window.setTimeout(() => {
+      if (!sessionStore.getState().streaming) return;
+      abandonInFlightStream({ sessionId, reason: "取消结果未确认", status: "uncertain" });
+    }, 10_000);
+  }, [currentSessionId, sessionStore, sessionsStore, notifyBridgeUnavailable]);
 
   const handleRenameTitle = useCallback(async (newTitle: string) => {
     if (!currentEntry) return;
@@ -865,6 +915,26 @@ export function useAppShellRuntime(): AppShellRuntime {
   }, [sessionStore, setToast, sessionEvents]);
   handleAgentDiedRef.current = handleAgentDied;
 
+  const enterpriseAccount = identityMode === "backend"
+    ? {
+        label: backendSession?.status === "signed_in" ? backendSession.displayName : undefined,
+        status: (backendSession?.status === "signed_in" ? "signed_in" : backendSession?.status === "error" ? "error" : "signed_out") as "signed_out" | "signed_in" | "error",
+        notice: backendAccountNotice(backendSession),
+      }
+    : {
+        label: casdoorSession?.status === "signed_in"
+          ? (casdoorSession.identity?.displayName || casdoorSession.identity?.email || casdoorSession.identity?.subject)
+          : undefined,
+        status: (casdoorSession?.status === "signed_in"
+          ? "signed_in"
+          : casdoorSession?.status === "configuration_needed"
+            ? "configuration_needed"
+            : casdoorSession?.status === "error"
+              ? "error"
+              : "signed_out") as "signed_out" | "signed_in" | "configuration_needed" | "error",
+        notice: casdoorSession?.status === "signed_in" ? casdoorSession.tenantContext.activeTenantId : undefined,
+      };
+
   // ====== final return ======================================================
   return {
     init, initError, apiReady: init?.auth.ready ?? false,
@@ -874,6 +944,7 @@ export function useAppShellRuntime(): AppShellRuntime {
     setSettingsSection,
     feedbackOpen, setFeedbackOpen,
     setBackendSession,
+    enterpriseAccount,
     dataDirOpen, setDataDirOpen,
     sidebarCollapsed, setSidebarCollapsed,
     currentModelId, setCurrentModelId, models, workspaces, switchingWorkspace,

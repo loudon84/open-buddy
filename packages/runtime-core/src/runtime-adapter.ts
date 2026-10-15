@@ -4,7 +4,7 @@ export type { IdentityContext };
 
 export type RuntimeType = "local_process" | "remote_gateway" | "embedded" | "container";
 
-export type RuntimePhase =
+export type RuntimeLifecyclePhase =
   | "UNINITIALIZED"
   | "INIT"
   | "READY"
@@ -20,12 +20,14 @@ export interface RuntimeHealth {
   message?: string;
 }
 
+/** @deprecated RA-08 removes chat(). Session traffic uses the canonical RuntimeAdapter. */
 export interface RuntimeRequest {
   text: string;
   sessionId?: string;
   identityContext?: IdentityContext;
 }
 
+/** @deprecated RA-08 removes chat(). */
 export interface RuntimeResponse {
   sessionId: string;
   text: string;
@@ -44,11 +46,12 @@ export interface RuntimeAdapter {
   start(): Promise<void>;
   stop(): Promise<void>;
   health(): Promise<RuntimeHealth>;
+  /** @deprecated Use the session contract. Removed from the production prompt path. */
   chat(request: RuntimeRequest): Promise<RuntimeResponse>;
   listCapabilities(): Promise<Capability[]>;
 }
 
-const EDGES: Record<RuntimePhase, readonly RuntimePhase[]> = {
+const EDGES: Record<RuntimeLifecyclePhase, readonly RuntimeLifecyclePhase[]> = {
   UNINITIALIZED: ["INIT"],
   INIT: ["READY"],
   READY: ["START"],
@@ -58,7 +61,7 @@ const EDGES: Record<RuntimePhase, readonly RuntimePhase[]> = {
   STOPPED: ["START"],
 };
 
-export function assertTransition(from: RuntimePhase, to: RuntimePhase): void {
+export function assertTransition(from: RuntimeLifecyclePhase, to: RuntimeLifecyclePhase): void {
   if (!EDGES[from].includes(to)) {
     throw new Error(`illegal runtime transition ${from} -> ${to}`);
   }

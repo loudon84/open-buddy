@@ -22,7 +22,7 @@ process.setMaxListeners(64);
  *
  * See docs/migration-pi-electron.md.
  */
-import { app, BrowserWindow, Menu, shell } from "electron";
+import { app, BrowserWindow, Menu, protocol, shell } from "electron";
 import { createMainLogger } from "@openbuddy/logging-main";
 import { generateTraceId } from "@openbuddy/logging-shared";
 
@@ -42,6 +42,9 @@ import { installAppLifecycle } from "./bootstrap/app-lifecycle";
 import { casdoorAuth } from "./casdoor/casdoor-auth";
 import { backendAuth } from "./backend-auth/backend-auth-service";
 import { identity } from "./identity/identity-service";
+import { identityMode } from "./identity/identity-mode";
+import { enterpriseIdentityPort } from "./identity/enterprise-identity-port";
+import { retireBackendAuthLocalState } from "./identity/retire-backend-auth";
 import { initCasdoorSecurity, type CasdoorSecurityController } from "./security/casdoor";
 import { perfTraceMark } from "./observability/perf-trace";
 import { createMainWindow as buildMainWindow } from "./main-window";
@@ -60,6 +63,10 @@ let agentHost!: typeof import("./agent/agent-host").agentHost;
 const mainFilename = fileURLToPath(import.meta.url);
 const mainDirname = dirname(mainFilename);
 const execFileAsync = promisify(execFile);
+
+protocol.registerSchemesAsPrivileged([
+  { scheme: "casdoor", privileges: { standard: true, secure: true, supportFetchAPI: true } },
+]);
 
 app.setName("SMC-Copilot");
 
@@ -282,10 +289,27 @@ async function bootBackgroundServices(): Promise<void> {
     console.error("[openbuddy-pi] casdoor init failed:", error);
   }
   try {
-    identity.attachBackendAuth(backendAuth);
-    await backendAuth.init();
+    if (identityMode() === "backend") {
+      identity.attachBackendAuth(backendAuth);
+      await backendAuth.init();
+    } else {
+      const origin = process.env.OPENBUDDY_BACKEND_ORIGIN?.trim() ?? "";
+      const port = enterpriseIdentityPort();
+      identity.attachCasdoor({
+        origin,
+        getAccessToken: () => port.getAccessToken(),
+        tenantId: () => port.current()?.tenantId,
+        binding: () => port.current(),
+        onChange: (listener) => {
+          port.onChange((change) => {
+            listener(change.reason === "login" ? "login" : "logout");
+          });
+        },
+      });
+      await retireBackendAuthLocalState();
+    }
   } catch (error) {
-    console.error("[openbuddy-pi] backend auth init failed:", error);
+    console.error("[openbuddy-pi] identity init failed:", error);
   }
   perfTraceMark("casdoor-init-end");
   casdoorController!.setLastScope(casdoorController!.casdoorScope());

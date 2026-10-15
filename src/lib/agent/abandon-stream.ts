@@ -39,7 +39,7 @@ export interface AbandonInFlightStreamOptions {
   /** Final session status to write. Default "failed" (most callers are
    *  error paths); user-cancel uses "completed" because cancel is a
    *  user-initiated normal termination, not a backend failure. */
-  status?: "failed" | "completed";
+  status?: "failed" | "completed" | "uncertain";
   /** Structured per-turn error (e.g. a provider 429 with a machine code).
    *  When provided AND the bubble has no streamed content, the renderer
    *  renders an inline error card inside the transcript instead of the

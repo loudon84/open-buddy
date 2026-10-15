@@ -149,6 +149,15 @@ export async function prompt(
   });
   emitPluginEvent("session/input", { sessionId: state.session.sessionId, text });
   await writePromptHistory(text);
+  const onAbort = () => {
+    console.log("[openbuddy] pi prompt.aborted", { traceId, sessionId });
+    void state.session?.abort();
+  };
+  if (options?.signal?.aborted) {
+    await state.session.abort();
+    return;
+  }
+  options?.signal?.addEventListener("abort", onAbort, { once: true });
   try {
     await state.session.prompt(text);
     console.log("[openbuddy] pi prompt.dispatched", { traceId, sessionId });
@@ -163,6 +172,8 @@ export async function prompt(
     emitRendererEvent("pi://error", { sessionId: state.session.sessionId, error: String(error) });
     hostFailedLog("agent:prompt", traceId, error);
     throw error;
+  } finally {
+    options?.signal?.removeEventListener("abort", onAbort);
   }
 }
 

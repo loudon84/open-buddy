@@ -142,6 +142,20 @@ describe("gateway workspace authorization and idempotency scope", () => {
     expect(await task.json()).toMatchObject({ taskId: "upstream-task-1", status: "accepted" });
     expect(tasks).toEqual(["report"]);
 
+    const wrongWorkspace = await gateway.fetch("/v1/sessions", {
+      method: "POST",
+      headers: as("ws-a", "member"),
+      body: JSON.stringify({ agentInstanceId: "instance-a", workspaceId: "other-tenant-workspace" }),
+    });
+    expect(wrongWorkspace.status).toBe(403);
+
+    const huge = await gateway.fetch("/v1/sessions", {
+      method: "POST",
+      headers: as("ws-a", "member"),
+      body: JSON.stringify({ agentInstanceId: "instance-a", padding: "x".repeat(1024 * 1024) }),
+    });
+    expect(huge.status).toBe(413);
+
     await gateway.close();
     await new Promise<void>((resolve, reject) => upstream.close((error) => (error ? reject(error) : resolve())));
     await rm(dir, { recursive: true, force: true });

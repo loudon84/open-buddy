@@ -9,6 +9,7 @@ import type {
   RunReceipt,
   RuntimeAdapter,
   RuntimeEvent,
+  RuntimeStatus,
   Scope,
   Session,
   SessionRef,
@@ -21,6 +22,8 @@ import { LocalPiError } from "../../../packages/runtime/openbuddy-runtime-adapte
 export type PiHostEvent = { type?: string; [field: string]: unknown };
 
 export interface LocalPiPort {
+  /** False until the desktop host installs the real Pi port. */
+  bound?: boolean;
   loadEntries(sessionPath: string): Promise<Array<Record<string, unknown>>>;
   continueSession(sessionPath: string): Promise<{ sessionId: string; sessionPath: string }>;
   send(text: string): Promise<{ runId: string }>;
@@ -73,6 +76,11 @@ export class LocalPiAdapter implements RuntimeAdapter {
       runtimeId: `local-pi:${this.port.installationId}`,
       kind: "local-pi",
       features: {
+        attachments: true,
+        steer: true,
+        followUp: true,
+        modelSwitch: true,
+        liveStream: false,
         resume: true,
         cancel: true,
         approvals: true,
@@ -111,7 +119,22 @@ export class LocalPiAdapter implements RuntimeAdapter {
   }
 
   async createSession(input: RequestContext & { agentInstanceId: string }): Promise<Session> {
-    return this.openExisting(input.agentInstanceId, input);
+    const id = input.agentInstanceId;
+    const looksLikePath = id.includes("/") || id.includes("\\") || id.endsWith(".jsonl");
+    if (looksLikePath) return this.openExisting(id, input);
+    const now = new Date().toISOString();
+    this.sessionId = input.requestId;
+    return {
+      ...this.connected!,
+      sessionId: this.sessionId,
+      agentInstanceId: id,
+      runtimeId: `local-pi:${this.port.installationId}`,
+      status: "idle",
+      revision: 0,
+      lastSeq: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
   }
 
   async getSession(ref: SessionRef): Promise<Session> {
@@ -145,10 +168,12 @@ export class LocalPiAdapter implements RuntimeAdapter {
     }
   }
 
-  async cancel(ref: SessionRef, _runId: string, context: RequestContext): Promise<{ accepted: boolean }> {
+  async cancel(ref: SessionRef, runId: string, context: RequestContext): Promise<{ accepted: boolean }> {
     this.requireLocal(ref);
     this.requireLocal(context);
+    if (!this.runId || this.runId !== runId) throw new LocalPiError("NOT_FOUND", "run is not current");
     await this.port.abort();
+    this.runId = null;
     return { accepted: true };
   }
 
@@ -178,18 +203,32 @@ export class LocalPiAdapter implements RuntimeAdapter {
     throw new LocalPiError("UNSUPPORTED_CAPABILITY", "local Pi tools stay on the existing host");
   }
 
-  async queryStatus(agentInstanceId: string): Promise<{ agentInstanceId: string; status: string; capabilities: Capabilities; updatedAt: string }> {
+  async queryStatus(_agentInstanceId: string): Promise<RuntimeStatus> {
     return {
-      agentInstanceId,
-      status: this.connected ? "connected" : "offline",
+      runtimeId: `local-pi:${this.port.installationId}`,
+      kind: "local-pi",
+      state: this.connected ? "connected" : "disconnected",
+      activeRuns: this.runId ? 1 : 0,
       capabilities: {
         protocolVersion: "1.0",
         runtimeId: `local-pi:${this.port.installationId}`,
         kind: "local-pi",
-        features: { resume: true, cancel: true, approvals: true, tools: true, tasks: false, artifacts: false },
+        features: {
+          resume: true,
+          cancel: true,
+          approvals: true,
+          tools: true,
+          tasks: false,
+          artifacts: false,
+          attachments: true,
+          steer: true,
+          followUp: true,
+          modelSwitch: true,
+          liveStream: false,
+        },
         toolSchemaVersion: "pi-jsonl-1",
       },
-      updatedAt: new Date(0).toISOString(),
+      checkedAt: new Date(0).toISOString(),
     };
   }
 
